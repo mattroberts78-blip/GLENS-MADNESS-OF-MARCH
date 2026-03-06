@@ -1,4 +1,47 @@
-export default function LoginPage() {
+import { redirect } from 'next/navigation';
+import { sql } from '@vercel/postgres';
+import { setSession } from '@/lib/auth/session';
+
+async function login(formData: FormData) {
+  'use server';
+
+  const username = String(formData.get('username') || '').trim();
+  const password = String(formData.get('password') || '');
+
+  if (!username || !password) {
+    redirect('/login?error=1');
+  }
+
+  const result =
+    await sql`SELECT id, username, password, (username = 'admin') AS is_admin FROM credentials WHERE username = ${username} LIMIT 1`;
+  const row = result.rows[0] as
+    | { id: number; username: string; password: string; is_admin: boolean }
+    | undefined;
+
+  if (!row || row.password !== password) {
+    redirect('/login?error=1');
+  }
+
+  setSession({
+    credentialId: row.id,
+    username: row.username,
+    isAdmin: row.is_admin,
+  });
+
+  if (row.is_admin) {
+    redirect('/admin');
+  }
+
+  redirect('/');
+}
+
+export default function LoginPage({
+  searchParams,
+}: {
+  searchParams?: { error?: string };
+}) {
+  const showError = searchParams?.error === '1';
+
   return (
     <main style={{ padding: '2rem', maxWidth: 400, margin: '0 auto' }}>
       <h1 style={{ fontSize: '1.5rem', marginBottom: '1rem' }}>
@@ -7,9 +50,13 @@ export default function LoginPage() {
       <p style={{ color: 'var(--muted)', marginBottom: '1.5rem' }}>
         Use the username and password you received after signing up.
       </p>
+      {showError && (
+        <p style={{ color: '#f97373', marginBottom: '1rem', fontSize: '0.9rem' }}>
+          Invalid username or password.
+        </p>
+      )}
       <form
-        action="#"
-        method="post"
+        action={login}
         style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}
       >
         <label style={{ display: 'flex', flexDirection: 'column', gap: 0.25 }}>

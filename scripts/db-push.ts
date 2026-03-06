@@ -1,10 +1,15 @@
 /**
  * Run schema.sql against the database.
- * Set POSTGRES_URL in .env.local (or use Vercel env when deployed).
+ * Loads .env.local so POSTGRES_URL is available when running locally.
  */
 import { readFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { config } from 'dotenv';
 import { sql } from '@vercel/postgres';
+
+// Load environment variables from .env.local (fallback to .env)
+config({ path: join(process.cwd(), '.env.local') });
+config();
 
 const schemaPath = join(process.cwd(), 'lib', 'db', 'schema.sql');
 const schema = readFileSync(schemaPath, 'utf-8');
