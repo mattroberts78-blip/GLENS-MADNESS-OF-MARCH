@@ -28,6 +28,34 @@ body {
   color: var(--text);
   min-height: 100vh;
   line-height: 1.5;
+  position: relative;
+}
+
+/* Large background logo — prominent and big behind all content */
+.bg-logo {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.bg-logo img {
+  width: min(85vmin, 720px);
+  height: min(85vmin, 720px);
+  object-fit: contain;
+  opacity: 0.14;
+}
+
+.page-wrap {
+  position: relative;
+  z-index: 1;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
 a {
@@ -70,8 +98,8 @@ a:hover {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 48px;
-  height: 48px;
+  width: 56px;
+  height: 56px;
   border-radius: 50%;
   overflow: hidden;
   background: var(--surface-elevated);

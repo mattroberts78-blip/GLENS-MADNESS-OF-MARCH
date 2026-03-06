@@ -15,8 +15,13 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <Header />
-        {children}
+        <div className="bg-logo" aria-hidden>
+          <img src="/glen.jpg" alt="" />
+        </div>
+        <div className="page-wrap">
+          <Header />
+          {children}
+        </div>
       </body>
     </html>
   );
