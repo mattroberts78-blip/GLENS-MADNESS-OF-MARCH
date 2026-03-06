@@ -14,9 +14,13 @@ export function Header() {
       </Link>
       <nav className="site-nav">
         {session?.isAdmin ? (
-          <Link href="/admin" className="nav-link">Admin</Link>
+          <>
+            <Link href="/logout" className="nav-link">Log out</Link>
+            <Link href="/admin" className="nav-link">Admin</Link>
+          </>
         ) : session ? (
           <>
+            <Link href="/logout" className="nav-link">Log out</Link>
             <Link href="/" className="nav-link">My brackets</Link>
             <Link href="/scoreboard" className="nav-link">Scoreboard</Link>
           </>
