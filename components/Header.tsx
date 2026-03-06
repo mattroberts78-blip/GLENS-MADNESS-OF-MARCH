@@ -8,7 +8,7 @@ export function Header() {
     <header className="site-header">
       <Link href="/" className="site-brand">
         <span className="site-logo-wrap">
-          <img src="/glen.jpg" alt="Glen" width={56} height={56} className="site-logo" />
+          <img src="/glensmadness.png" alt="Glen" width={56} height={56} className="site-logo" />
         </span>
         <span className="site-title">Glen&apos;s Madness of March</span>
       </Link>
