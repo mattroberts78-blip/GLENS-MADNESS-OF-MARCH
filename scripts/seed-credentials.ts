@@ -14,15 +14,10 @@ if (!process.env.POSTGRES_URL) {
   process.exit(1);
 }
 
-function generatePassword(length: number): string {
-  const chars =
-    'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%^';
-  let result = '';
-  for (let i = 0; i < length; i += 1) {
-    const idx = Math.floor(Math.random() * chars.length);
-    result += chars[idx];
-  }
-  return result;
+/** Generate a simple 6-digit numeric password (e.g. 042817). */
+function generatePassword(): string {
+  const n = Math.floor(Math.random() * 1_000_000);
+  return String(n).padStart(6, '0');
 }
 
 async function main() {
@@ -35,7 +30,7 @@ async function main() {
 
   for (let i = 1; i <= 20; i += 1) {
     const username = `entry${String(i).padStart(3, '0')}`;
-    const password = generatePassword(10);
+    const password = generatePassword();
     const result =
       await sql`INSERT INTO credentials (username, password)
                 VALUES (${username}, ${password})
