@@ -43,64 +43,26 @@ export default function LoginPage({
   const showError = searchParams?.error === '1';
 
   return (
-    <main style={{ padding: '2rem', maxWidth: 400, margin: '0 auto' }}>
-      <h1 style={{ fontSize: '1.5rem', marginBottom: '1rem' }}>
-        Participant login
-      </h1>
-      <p style={{ color: 'var(--muted)', marginBottom: '1.5rem' }}>
-        Use the username and password you received after signing up.
+    <main className="page-container" style={{ maxWidth: 420 }}>
+      <h1 className="page-title">Log in</h1>
+      <p className="page-subtitle">
+        Use the username and password you received for Glen&apos;s Madness of March.
       </p>
       {showError && (
-        <p style={{ color: '#f97373', marginBottom: '1rem', fontSize: '0.9rem' }}>
+        <p style={{ color: 'var(--error)', marginBottom: '1rem', fontSize: '0.9rem' }}>
           Invalid username or password.
         </p>
       )}
-      <form
-        action={login}
-        style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}
-      >
-        <label style={{ display: 'flex', flexDirection: 'column', gap: 0.25 }}>
+      <form action={login} className="card" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+        <label style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', fontSize: '0.9rem', fontWeight: 500 }}>
           Username
-          <input
-            type="text"
-            name="username"
-            autoComplete="username"
-            style={{
-              padding: '0.5rem',
-              borderRadius: 6,
-              border: '1px solid var(--surface)',
-              background: 'var(--surface)',
-              color: 'var(--text)',
-            }}
-          />
+          <input type="text" name="username" autoComplete="username" className="input" />
         </label>
-        <label style={{ display: 'flex', flexDirection: 'column', gap: 0.25 }}>
+        <label style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', fontSize: '0.9rem', fontWeight: 500 }}>
           Password
-          <input
-            type="password"
-            name="password"
-            autoComplete="current-password"
-            style={{
-              padding: '0.5rem',
-              borderRadius: 6,
-              border: '1px solid var(--surface)',
-              background: 'var(--surface)',
-              color: 'var(--text)',
-            }}
-          />
+          <input type="password" name="password" autoComplete="current-password" className="input" />
         </label>
-        <button
-          type="submit"
-          style={{
-            padding: '0.6rem 1rem',
-            background: 'var(--accent)',
-            color: 'var(--bg)',
-            border: 'none',
-            borderRadius: 6,
-            fontWeight: 600,
-            cursor: 'pointer',
-          }}
-        >
+        <button type="submit" className="btn btn-primary" style={{ marginTop: '0.25rem' }}>
           Log in
         </button>
       </form>

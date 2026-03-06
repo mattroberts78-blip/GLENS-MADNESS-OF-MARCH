@@ -1,6 +1,10 @@
-# Glens Madness
+# Glen's Madness of March
 
 NCAA March Madness bracket contest — web app for running a local pool with round×seed scoring.
+
+## Branding
+
+- **Logo:** Place `glen.jpg` in the `public/` folder so it appears in the site header. The app title is **Glen's Madness of March** everywhere (header, login, metadata).
 
 ## Stack
 

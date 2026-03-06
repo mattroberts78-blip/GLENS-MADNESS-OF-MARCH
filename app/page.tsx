@@ -1,37 +1,58 @@
 import Link from 'next/link';
+import { redirect } from 'next/navigation';
+import { sql } from '@vercel/postgres';
+import { getSession } from '@/lib/auth/session';
 
-export default function HomePage() {
+export default async function HomePage() {
+  const session = getSession();
+
+  if (session && !session.isAdmin) {
+    const entriesResult = await sql`
+      SELECT id, name, locked_at
+      FROM entries
+      WHERE credential_id = ${session.credentialId}
+      ORDER BY id ASC
+    `;
+    const entries = entriesResult.rows as { id: number; name: string; locked_at: string | null }[];
+
+    return (
+      <main className="page-container">
+        <h1 className="page-title">Your brackets</h1>
+        <p className="page-subtitle">
+          Logged in as <strong>{session.username}</strong>. You have {entries.length} bracket{entries.length === 1 ? '' : 's'} to fill out.
+        </p>
+        <ul className="bracket-list">
+          {entries.map((entry) => (
+            <li key={entry.id}>
+              <Link href={`/brackets/${entry.id}`} className="bracket-card">
+                <strong>{entry.name}</strong>
+                {entry.locked_at ? (
+                  <span className="badge badge-locked">Locked</span>
+                ) : (
+                  <span className="badge badge-open">Fill out</span>
+                )}
+              </Link>
+            </li>
+          ))}
+        </ul>
+        <p style={{ marginTop: '1.5rem' }}>
+          <Link href="/scoreboard" className="nav-link nav-link-cta">View scoreboard</Link>
+        </p>
+      </main>
+    );
+  }
+
   return (
-    <main style={{ padding: '2rem', maxWidth: 640, margin: '0 auto' }}>
-      <h1 style={{ fontSize: '1.75rem', marginBottom: '0.5rem' }}>
-        Glens Madness
-      </h1>
-      <p style={{ color: 'var(--muted)', marginBottom: '2rem' }}>
-        NCAA March Madness bracket contest
+    <main className="page-container">
+      <h1 className="page-title">Glen&apos;s Madness of March</h1>
+      <p className="page-subtitle">
+        NCAA March Madness bracket contest — fill out your picks and follow the standings.
       </p>
-      <nav style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-        <Link
-          href="/login"
-          style={{
-            padding: '0.5rem 1rem',
-            background: 'var(--surface)',
-            borderRadius: 6,
-            textDecoration: 'none',
-            color: 'var(--text)',
-          }}
-        >
+      <nav style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+        <Link href="/login" className="btn btn-primary">
           Participant login
         </Link>
-        <Link
-          href="/admin"
-          style={{
-            padding: '0.5rem 1rem',
-            background: 'var(--surface)',
-            borderRadius: 6,
-            textDecoration: 'none',
-            color: 'var(--muted)',
-          }}
-        >
+        <Link href="/admin" className="btn btn-secondary">
           Admin
         </Link>
       </nav>
