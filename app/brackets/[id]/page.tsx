@@ -22,7 +22,20 @@ export default async function BracketPage({
     WHERE e.id = ${entryId} AND e.credential_id = ${session.credentialId}
   `;
   const entry = result.rows[0] as { id: number; name: string; locked_at: string | null } | undefined;
-  if (!entry) redirect('/');
+
+  if (!entry) {
+    return (
+      <main className="page-container" style={{ maxWidth: 900 }}>
+        <p style={{ marginBottom: '1rem' }}>
+          <Link href="/" className="nav-link">← Back to your brackets</Link>
+        </p>
+        <h1 className="page-title">Bracket not found</h1>
+        <p className="page-subtitle">
+          This bracket doesn&apos;t exist or you don&apos;t have access. <Link href="/">Return to your brackets</Link>.
+        </p>
+      </main>
+    );
+  }
 
   return (
     <main className="page-container" style={{ maxWidth: 900 }}>

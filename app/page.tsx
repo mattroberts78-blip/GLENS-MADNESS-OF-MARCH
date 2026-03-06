@@ -22,18 +22,27 @@ export default async function HomePage() {
           Logged in as <strong>{session.username}</strong>. You have {entries.length} bracket{entries.length === 1 ? '' : 's'} to fill out.
         </p>
         <ul className="bracket-list">
-          {entries.map((entry) => (
-            <li key={entry.id}>
-              <Link href={`/brackets/${entry.id}`} className="bracket-card">
-                <strong>{entry.name}</strong>
-                {entry.locked_at ? (
-                  <span className="badge badge-locked">Locked</span>
-                ) : (
-                  <span className="badge badge-open">Fill out</span>
-                )}
-              </Link>
+          {entries.length === 0 ? (
+            <li className="card" style={{ padding: '1.5rem', color: 'var(--text-muted)' }}>
+              <strong style={{ color: 'var(--text)' }}>No brackets yet</strong>
+              <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.95rem' }}>
+                Your account doesn&apos;t have any brackets assigned. Contact the organizer to get your login and bracket(s) after you sign up.
+              </p>
             </li>
-          ))}
+          ) : (
+            entries.map((entry) => (
+              <li key={entry.id}>
+                <Link href={`/brackets/${entry.id}`} className="bracket-card">
+                  <strong>{entry.name}</strong>
+                  {entry.locked_at ? (
+                    <span className="badge badge-locked">Locked</span>
+                  ) : (
+                    <span className="badge badge-open">Fill out</span>
+                  )}
+                </Link>
+              </li>
+            ))
+          )}
         </ul>
         <p style={{ marginTop: '1.5rem' }}>
           <Link href="/scoreboard" className="nav-link nav-link-cta">View scoreboard</Link>

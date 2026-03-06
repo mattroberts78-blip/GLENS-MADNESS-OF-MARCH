@@ -24,12 +24,15 @@ export function BracketEntry({
 
   const gamesByRound = useMemo(() => {
     const map: Record<number, BracketGame[]> = {};
-    DEMO_BRACKET_GAMES.forEach((g) => {
+    const games = DEMO_BRACKET_GAMES ?? [];
+    games.forEach((g) => {
       if (!map[g.round]) map[g.round] = [];
       map[g.round].push(g);
     });
     return map;
   }, []);
+
+  const hasRounds = gamesByRound[1]?.length > 0;
 
   const pick = (gameId: string, team: 0 | 1) => {
     if (locked) return;
@@ -37,7 +40,7 @@ export function BracketEntry({
   };
 
   const pickedCount = Object.keys(picks).length;
-  const totalGames = DEMO_BRACKET_GAMES.length;
+  const totalGames = (DEMO_BRACKET_GAMES && DEMO_BRACKET_GAMES.length) || 63;
   const complete = pickedCount === totalGames && championshipTotal.trim() !== '';
 
   const handleSave = () => {
@@ -46,7 +49,7 @@ export function BracketEntry({
   };
 
   return (
-    <div className="bracket-entry">
+    <div className="bracket-entry" data-bracket-mounted style={{ minHeight: 400 }}>
       <div className="bracket-progress card">
         <div className="bracket-progress__bar">
           <div

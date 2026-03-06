@@ -287,6 +287,7 @@ a:hover {
 /* Bracket entry page */
 .bracket-entry {
   padding-bottom: 2rem;
+  min-height: 360px;
 }
 
 .bracket-progress {
