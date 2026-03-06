@@ -4,7 +4,7 @@ NCAA March Madness bracket contest — web app for running a local pool with rou
 
 ## Branding
 
-- **Logo:** Place `glen.jpg` in the `public/` folder so it appears in the site header. The app title is **Glen's Madness of March** everywhere (header, login, metadata).
+- **Logo:** Place `glensmadness.png` in the `public/` folder so it appears in the site header and as the large background mark. The app title is **Glen's Madness of March** everywhere (header, login, metadata).
 
 ## Stack
 

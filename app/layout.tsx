@@ -16,7 +16,7 @@ export default function RootLayout({
     <html lang="en">
       <body>
         <div className="bg-logo" aria-hidden>
-          <img src="/glen.jpg" alt="" />
+          <img src="/glensmadness.png" alt="" />
         </div>
         <div className="page-wrap">
           <Header />
