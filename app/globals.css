@@ -283,3 +283,142 @@ a:hover {
 .badge-open {
   color: var(--accent);
 }
+
+/* Bracket entry page */
+.bracket-entry {
+  padding-bottom: 2rem;
+}
+
+.bracket-progress {
+  margin-bottom: 1.5rem;
+}
+
+.bracket-progress__bar {
+  height: 8px;
+  background: var(--bg);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 0.5rem;
+}
+
+.bracket-progress__fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 4px;
+  transition: width 0.25s ease;
+}
+
+.bracket-progress__text {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+.bracket-round__title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin: 0 0 1rem 0;
+  color: var(--text);
+  letter-spacing: -0.01em;
+}
+
+.bracket-round--championship .bracket-round__title {
+  color: var(--accent);
+  font-size: 1.2rem;
+}
+
+.bracket-round__games {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+}
+
+.bracket-game {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.bracket-game__vs {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  flex-shrink: 0;
+}
+
+.bracket-team {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 0.75rem;
+  font-family: var(--font);
+  font-size: 0.9rem;
+  font-weight: 500;
+  text-align: left;
+  color: var(--text);
+  background: var(--bg);
+  border: 2px solid var(--border);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
+}
+
+.bracket-team:hover:not(:disabled) {
+  border-color: var(--accent);
+  background: var(--surface-elevated);
+}
+
+.bracket-team:disabled {
+  cursor: default;
+  opacity: 0.9;
+}
+
+.bracket-team--picked {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+
+.bracket-team__seed {
+  flex-shrink: 0;
+  width: 1.5rem;
+  height: 1.5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  background: var(--surface-elevated);
+  border-radius: 4px;
+  color: var(--text-muted);
+}
+
+.bracket-team--picked .bracket-team__seed {
+  background: var(--accent);
+  color: var(--bg);
+}
+
+.bracket-team__label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bracket-tiebreaker {
+  margin-bottom: 1.5rem;
+}
+
+.bracket-actions {
+  margin-top: 0.5rem;
+}
+
+.bracket-locked-msg {
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  margin: 0;
+}

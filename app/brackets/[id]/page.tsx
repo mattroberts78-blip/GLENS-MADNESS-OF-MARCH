@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { sql } from '@vercel/postgres';
 import { getSession } from '@/lib/auth/session';
+import { BracketEntry } from '@/components/BracketEntry';
 
 export default async function BracketPage({
   params,
@@ -24,17 +25,19 @@ export default async function BracketPage({
   if (!entry) redirect('/');
 
   return (
-    <main className="page-container">
+    <main className="page-container" style={{ maxWidth: 900 }}>
       <p style={{ marginBottom: '1rem' }}>
         <Link href="/" className="nav-link">← Back to your brackets</Link>
       </p>
       <h1 className="page-title">{entry.name}</h1>
       <p className="page-subtitle">
-        Bracket picker and championship total will go here. For now, the contest and games need to be set up by the admin.
+        Pick the winner for each game. Tiebreaker: predicted total points in the championship game.
       </p>
-      {entry.locked_at && (
-        <p style={{ color: 'var(--text-muted)' }}>This bracket is locked.</p>
-      )}
+      <BracketEntry
+        entryId={entry.id}
+        entryName={entry.name}
+        locked={!!entry.locked_at}
+      />
     </main>
   );
 }
