@@ -16,7 +16,7 @@ async function setPaymentVerified(formData: FormData) {
   await sql`
     UPDATE credentials
     SET payment_verified_at = ${action === 'verify' ? new Date().toISOString() : null}
-    WHERE id = ${id} AND username <> 'admin'
+    WHERE id = ${id} AND LOWER(TRIM(username)) <> 'admin'
   `;
   redirect('/admin');
 }
@@ -32,7 +32,7 @@ export default async function AdminPage() {
     SELECT c.id, c.username, c.payment_verified_at,
            (SELECT COUNT(*) FROM entries e WHERE e.credential_id = c.id) AS entry_count
     FROM credentials c
-    WHERE c.username <> 'admin'
+    WHERE LOWER(TRIM(c.username)) <> 'admin'
     ORDER BY c.created_at DESC
     LIMIT 100
   `;
