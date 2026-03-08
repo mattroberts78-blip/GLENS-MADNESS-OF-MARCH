@@ -40,9 +40,10 @@ function decode(value: string): Session | null {
 }
 
 /** Read session from Next.js cookies() helper (server components / server actions). */
-export function getSession(): Session | null {
+export async function getSession(): Promise<Session | null> {
   try {
-    const cookie = cookies().get(SESSION_COOKIE);
+    const cookieStore = await cookies();
+    const cookie = cookieStore.get(SESSION_COOKIE);
     if (!cookie) return null;
     return decode(cookie.value);
   } catch {

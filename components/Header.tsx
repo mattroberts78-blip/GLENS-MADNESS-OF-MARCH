@@ -1,8 +1,8 @@
 import Link from 'next/link';
 import { getSession } from '@/lib/auth/session';
 
-export function Header() {
-  const session = getSession();
+export async function Header() {
+  const session = await getSession();
 
   return (
     <header className="site-header">

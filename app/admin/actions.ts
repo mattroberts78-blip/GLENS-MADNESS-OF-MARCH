@@ -9,19 +9,19 @@ export async function setPaymentVerified(
   credentialId: number,
   action: 'verify' | 'unverify',
 ): Promise<SetPaymentResult> {
-  const session = getSession();
-  if (!session) {
-    return { ok: false, error: 'Session expired. Please log in again.' };
-  }
-  if (!session.isAdmin) {
-    return { ok: false, error: 'Admin access required.' };
-  }
-
-  if (!Number.isFinite(credentialId)) {
-    return { ok: false, error: 'Invalid participant.' };
-  }
-
   try {
+    const session = await getSession();
+    if (!session) {
+      return { ok: false, error: 'Session expired. Please log in again.' };
+    }
+    if (!session.isAdmin) {
+      return { ok: false, error: 'Admin access required.' };
+    }
+
+    if (!Number.isFinite(credentialId)) {
+      return { ok: false, error: 'Invalid participant.' };
+    }
+
     await sql`
       UPDATE credentials
       SET payment_verified_at = ${action === 'verify' ? new Date().toISOString() : null}
@@ -30,6 +30,7 @@ export async function setPaymentVerified(
     return { ok: true };
   } catch (err) {
     console.error('[setPaymentVerified]', err);
-    return { ok: false, error: 'Database update failed.' };
+    const message = err instanceof Error ? err.message : 'Something went wrong.';
+    return { ok: false, error: message };
   }
 }

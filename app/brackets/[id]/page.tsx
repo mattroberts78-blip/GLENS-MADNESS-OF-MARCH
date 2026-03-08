@@ -9,7 +9,7 @@ export default async function BracketPage({
 }: {
   params: Promise<{ id: string }>;
 }) {
-  const session = getSession();
+  const session = await getSession();
   if (!session || session.isAdmin) redirect('/login');
 
   const { id } = await params;

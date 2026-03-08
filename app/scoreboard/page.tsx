@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation';
 import { getSession } from '@/lib/auth/session';
 
 export default async function ScoreboardPage() {
-  const session = getSession();
+  const session = await getSession();
   if (!session || session.isAdmin) redirect('/login');
 
   return (

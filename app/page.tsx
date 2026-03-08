@@ -4,7 +4,7 @@ import { sql } from '@vercel/postgres';
 import { getSession } from '@/lib/auth/session';
 
 export default async function HomePage() {
-  const session = getSession();
+  const session = await getSession();
 
   if (session && !session.isAdmin) {
     const entriesResult = await sql`
