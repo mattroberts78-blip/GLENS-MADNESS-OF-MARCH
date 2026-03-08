@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef } from 'react';
+import type { setPaymentVerified } from '@/app/admin/actions';
 
 type Participant = {
   id: number;
@@ -15,7 +16,13 @@ function fireConfetti() {
   });
 }
 
-export function PaymentTable({ participants: initial }: { participants: Participant[] }) {
+export function PaymentTable({
+  participants: initial,
+  setPaymentVerified: doSetPaymentVerified,
+}: {
+  participants: Participant[];
+  setPaymentVerified: typeof setPaymentVerified;
+}) {
   const [participants, setParticipants] = useState(initial);
   const [busy, setBusy] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -25,17 +32,9 @@ export function PaymentTable({ participants: initial }: { participants: Particip
     setError(null);
     lastSuccessIdRef.current = null;
     setBusy(credentialId);
-    const body = new FormData();
-    body.set('credentialId', String(credentialId));
-    body.set('action', action);
     try {
-      const res = await fetch('/api/admin/set-payment-verified', {
-        method: 'POST',
-        body,
-        credentials: 'include',
-      });
-      const data = res.ok ? null : await res.json().catch(() => ({}));
-      if (res.ok) {
+      const result = await doSetPaymentVerified(credentialId, action);
+      if (result.ok) {
         lastSuccessIdRef.current = credentialId;
         setError(null);
         if (action === 'verify') fireConfetti();
@@ -46,16 +45,11 @@ export function PaymentTable({ participants: initial }: { participants: Particip
               : p,
           ),
         );
-      } else if (res.status === 401) {
-        if (lastSuccessIdRef.current !== credentialId) {
-          const msg = (data as { error?: string })?.error ?? 'Session expired. Please log in again.';
-          setError(msg);
+      } else {
+        setError(result.error);
+        if (result.error.includes('Session expired')) {
           window.location.href = '/login?reason=session_expired';
         }
-      } else if (res.status === 403) {
-        setError((data as { error?: string })?.error ?? 'You don’t have permission to do that.');
-      } else {
-        setError((data as { error?: string })?.error ?? 'Something went wrong. Please try again.');
       }
     } catch {
       setError('Request failed. Please try again.');
