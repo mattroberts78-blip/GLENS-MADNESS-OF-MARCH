@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 
 type Participant = {
   id: number;
@@ -13,9 +13,11 @@ export function PaymentTable({ participants: initial }: { participants: Particip
   const [participants, setParticipants] = useState(initial);
   const [busy, setBusy] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const lastSuccessIdRef = useRef<number | null>(null);
 
   async function toggle(credentialId: number, action: 'verify' | 'unverify') {
     setError(null);
+    lastSuccessIdRef.current = null;
     setBusy(credentialId);
     const body = new FormData();
     body.set('credentialId', String(credentialId));
@@ -28,6 +30,8 @@ export function PaymentTable({ participants: initial }: { participants: Particip
       });
       const data = res.ok ? null : await res.json().catch(() => ({}));
       if (res.ok) {
+        lastSuccessIdRef.current = credentialId;
+        setError(null);
         setParticipants((prev) =>
           prev.map((p) =>
             p.id === credentialId
@@ -36,7 +40,9 @@ export function PaymentTable({ participants: initial }: { participants: Particip
           ),
         );
       } else if (res.status === 401) {
-        setError('Session expired. Please log in again.');
+        if (lastSuccessIdRef.current !== credentialId) {
+          setError('Session expired. Please log in again.');
+        }
       } else {
         setError((data as { error?: string })?.error ?? 'Something went wrong. Please try again.');
       }
