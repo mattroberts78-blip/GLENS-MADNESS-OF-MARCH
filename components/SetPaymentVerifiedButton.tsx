@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 
 type Props = {
   credentialId: number;
@@ -9,6 +10,7 @@ type Props = {
 };
 
 export function SetPaymentVerifiedButton({ credentialId, action, isVerified }: Props) {
+  const router = useRouter();
   const [loading, setLoading] = useState(false);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -23,7 +25,8 @@ export function SetPaymentVerifiedButton({ credentialId, action, isVerified }: P
         credentials: 'include',
       });
       if (res.ok) {
-        window.location.href = '/admin';
+        router.refresh();
+        setLoading(false);
         return;
       }
       if (res.status === 401) {
