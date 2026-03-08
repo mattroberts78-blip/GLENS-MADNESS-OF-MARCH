@@ -1,9 +1,10 @@
 import { NextResponse } from 'next/server';
-import { clearSession } from '@/lib/auth/session';
+import { clearSessionCookie } from '@/lib/auth/session';
 
 export function GET(request: Request) {
-  clearSession();
   const url = new URL(request.url);
-  const origin = url.origin;
-  return NextResponse.redirect(`${origin}/login`);
+  const res = NextResponse.redirect(`${url.origin}/login`);
+  const cookie = clearSessionCookie();
+  res.cookies.set(cookie.name, cookie.value, cookie.options);
+  return res;
 }

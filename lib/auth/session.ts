@@ -7,7 +7,7 @@ const SESSION_COOKIE_OPTIONS = {
   path: '/',
   secure: process.env.NODE_ENV === 'production',
   sameSite: 'lax' as const,
-  maxAge: 60 * 60 * 24 * 30, // 30 days
+  maxAge: 60 * 60 * 24 * 30,
 };
 
 export type Session = {
@@ -16,48 +16,60 @@ export type Session = {
   isAdmin: boolean;
 };
 
-/** Parse session from a Cookie header value (e.g. request.headers.get('cookie')). Use in Route Handlers when cookies() may not see the request cookie. */
-export function getSessionFromCookieHeader(cookieHeader: string | null): Session | null {
-  if (!cookieHeader) return null;
-  const match = cookieHeader.match(new RegExp(`${SESSION_COOKIE}=([^;]+)`));
-  if (!match) return null;
-  const raw = match[1].trim();
+export const SESSION_COOKIE_NAME = SESSION_COOKIE;
+
+function encode(session: Session): string {
+  return Buffer.from(JSON.stringify(session)).toString('base64');
+}
+
+function decode(value: string): Session | null {
   try {
-    const value = raw.startsWith('"') ? raw.slice(1, -1).replace(/\\"/g, '"') : decodeURIComponent(raw);
-    return JSON.parse(value) as Session;
+    return JSON.parse(Buffer.from(value, 'base64').toString('utf-8')) as Session;
   } catch {
+    // Fall back to raw JSON (old cookies before base64 migration)
     try {
-      return JSON.parse(raw) as Session;
+      return JSON.parse(value) as Session;
     } catch {
-      return null;
+      try {
+        return JSON.parse(decodeURIComponent(value)) as Session;
+      } catch {
+        return null;
+      }
     }
   }
 }
 
+/** Read session from Next.js cookies() helper (server components / server actions). */
 export function getSession(): Session | null {
-  const cookie = cookies().get(SESSION_COOKIE);
-  if (!cookie) return null;
   try {
-    return JSON.parse(cookie.value) as Session;
+    const cookie = cookies().get(SESSION_COOKIE);
+    if (!cookie) return null;
+    return decode(cookie.value);
   } catch {
     return null;
   }
 }
 
-export function setSession(session: Session) {
-  cookies().set(SESSION_COOKIE, JSON.stringify(session), SESSION_COOKIE_OPTIONS);
+/** Read session from a raw cookie string (e.g. request.cookies.get() or Cookie header). */
+export function decodeSession(cookieValue: string | undefined | null): Session | null {
+  if (!cookieValue) return null;
+  return decode(cookieValue);
 }
 
-/** For use in Route Handlers: set the session cookie on a Response (e.g. redirect). */
-export function sessionCookieForResponse(session: Session): { name: string; value: string; options: typeof SESSION_COOKIE_OPTIONS } {
+/** Build cookie name + value + options for setting on a NextResponse. */
+export function sessionCookieForResponse(session: Session) {
   return {
     name: SESSION_COOKIE,
-    value: JSON.stringify(session),
+    value: encode(session),
     options: SESSION_COOKIE_OPTIONS,
   };
 }
 
-export function clearSession() {
-  cookies().delete(SESSION_COOKIE);
+/** Clear session cookie on a NextResponse. */
+export function clearSessionCookie() {
+  return {
+    name: SESSION_COOKIE,
+    value: '',
+    options: { ...SESSION_COOKIE_OPTIONS, maxAge: 0 },
+  };
 }
-

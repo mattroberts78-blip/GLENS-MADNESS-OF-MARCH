@@ -1,16 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { sql } from '@vercel/postgres';
-import { getSessionFromCookieHeader } from '@/lib/auth/session';
+import { SESSION_COOKIE_NAME, decodeSession } from '@/lib/auth/session';
 
 export async function POST(request: NextRequest) {
-  const session = getSessionFromCookieHeader(request.headers.get('cookie'));
+  const raw = request.cookies.get(SESSION_COOKIE_NAME)?.value;
+  const session = decodeSession(raw);
   if (!session || !session.isAdmin) {
     return NextResponse.json({ ok: false }, { status: 401 });
   }
 
   const formData = await request.formData();
   const id = Number(formData.get('credentialId'));
-  const action = formData.get('action'); // 'verify' or 'unverify'
+  const action = formData.get('action');
 
   if (!Number.isNaN(id)) {
     await sql`
