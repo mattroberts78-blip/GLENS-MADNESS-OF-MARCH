@@ -4,8 +4,17 @@ import { getSessionFromRequest } from '@/lib/auth/session';
 
 export async function POST(request: NextRequest) {
   const session = getSessionFromRequest(request);
-  if (!session || !session.isAdmin) {
-    return NextResponse.json({ ok: false }, { status: 401 });
+  if (!session) {
+    return NextResponse.json(
+      { ok: false, code: 'session_expired', error: 'Session expired or missing. Please log in again.' },
+      { status: 401 },
+    );
+  }
+  if (!session.isAdmin) {
+    return NextResponse.json(
+      { ok: false, code: 'forbidden', error: 'Admin access required.' },
+      { status: 403 },
+    );
   }
 
   const formData = await request.formData();

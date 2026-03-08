@@ -1,9 +1,10 @@
 export default function LoginPage({
   searchParams,
 }: {
-  searchParams?: { error?: string; msg?: string };
+  searchParams?: { error?: string; msg?: string; reason?: string };
 }) {
   const showError = searchParams?.error === '1';
+  const sessionExpired = searchParams?.reason === 'session_expired';
 
   return (
     <main className="page-container" style={{ maxWidth: 420 }}>
@@ -11,7 +12,12 @@ export default function LoginPage({
       <p className="page-subtitle">
         Participants: use your email and 4-digit PIN. Admins: use username <strong>admin</strong> and your admin password.
       </p>
-      {showError && (
+      {sessionExpired && (
+        <p style={{ color: 'var(--error)', marginBottom: '1rem', fontSize: '0.9rem' }}>
+          Your session expired. Please log in again.
+        </p>
+      )}
+      {showError && !sessionExpired && (
         <p style={{ color: 'var(--error)', marginBottom: '1rem', fontSize: '0.9rem' }}>
           Invalid credentials.{searchParams?.msg ? ` (${searchParams.msg})` : ''}
         </p>

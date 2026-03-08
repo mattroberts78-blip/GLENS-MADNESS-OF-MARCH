@@ -9,6 +9,12 @@ type Participant = {
   entry_count: string;
 };
 
+function fireConfetti() {
+  import('canvas-confetti').then(({ default: confetti }) => {
+    confetti({ particleCount: 80, spread: 70, origin: { y: 0.6 } });
+  });
+}
+
 export function PaymentTable({ participants: initial }: { participants: Participant[] }) {
   const [participants, setParticipants] = useState(initial);
   const [busy, setBusy] = useState<number | null>(null);
@@ -32,6 +38,7 @@ export function PaymentTable({ participants: initial }: { participants: Particip
       if (res.ok) {
         lastSuccessIdRef.current = credentialId;
         setError(null);
+        if (action === 'verify') fireConfetti();
         setParticipants((prev) =>
           prev.map((p) =>
             p.id === credentialId
@@ -41,8 +48,12 @@ export function PaymentTable({ participants: initial }: { participants: Particip
         );
       } else if (res.status === 401) {
         if (lastSuccessIdRef.current !== credentialId) {
-          setError('Session expired. Please log in again.');
+          const msg = (data as { error?: string })?.error ?? 'Session expired. Please log in again.';
+          setError(msg);
+          window.location.href = '/login?reason=session_expired';
         }
+      } else if (res.status === 403) {
+        setError((data as { error?: string })?.error ?? 'You don’t have permission to do that.');
       } else {
         setError((data as { error?: string })?.error ?? 'Something went wrong. Please try again.');
       }

@@ -56,21 +56,28 @@ export function decodeSession(cookieValue: string | undefined | null): Session |
   return decode(cookieValue);
 }
 
-/** Get session from a Request/NextRequest (tries request.cookies then Cookie header). */
+/** Get session from a Request/NextRequest (tries Cookie header first, then request.cookies). */
 export function getSessionFromRequest(request: Request): Session | null {
+  // Prefer Cookie header — it's the raw header the browser sends and is reliable in API routes.
+  const cookieHeader = request.headers.get('cookie');
+  if (cookieHeader) {
+    const match = cookieHeader.match(new RegExp(`${SESSION_COOKIE}=([^;]+)`));
+    const raw = match ? match[1].trim().replace(/^"|"$/g, '') : null;
+    if (raw) {
+      try {
+        const session = decodeSession(decodeURIComponent(raw));
+        if (session) return session;
+      } catch {
+        const session = decodeSession(raw);
+        if (session) return session;
+      }
+    }
+  }
+  // Fallback: NextRequest.cookies (may be unset in some runtimes for API routes).
   const nextRequest = request as Request & { cookies?: { get: (name: string) => { value?: string } | undefined } };
   const fromCookies = nextRequest.cookies?.get?.(SESSION_COOKIE)?.value;
   if (fromCookies) return decodeSession(fromCookies);
-  const cookieHeader = request.headers.get('cookie');
-  if (!cookieHeader) return null;
-  const match = cookieHeader.match(new RegExp(`${SESSION_COOKIE}=([^;]+)`));
-  const raw = match ? match[1].trim().replace(/^"|"$/g, '') : null;
-  if (!raw) return null;
-  try {
-    return decodeSession(decodeURIComponent(raw));
-  } catch {
-    return decodeSession(raw);
-  }
+  return null;
 }
 
 /** Build cookie name + value + options for setting on a NextResponse. */
