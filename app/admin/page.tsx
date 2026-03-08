@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation';
 import { sql } from '@vercel/postgres';
 import { getSession } from '@/lib/auth/session';
+import { SetPaymentVerifiedButton } from '@/components/SetPaymentVerifiedButton';
 
 export default async function AdminPage() {
   const session = getSession();
@@ -71,26 +72,11 @@ export default async function AdminPage() {
                   <td style={{ padding: '0.5rem 0.75rem', borderTop: '1px solid var(--border)' }}>{p.username}</td>
                   <td style={{ padding: '0.5rem 0.75rem', borderTop: '1px solid var(--border)' }}>{p.entry_count}</td>
                   <td style={{ padding: '0.5rem 0.75rem', borderTop: '1px solid var(--border)' }}>
-                    <form action="/api/admin/set-payment-verified" method="POST" style={{ display: 'inline' }}>
-                      <input type="hidden" name="credentialId" value={p.id} />
-                      {p.payment_verified_at ? (
-                        <>
-                          <span style={{ color: 'var(--success)', marginRight: '0.5rem' }}>Yes</span>
-                          <input type="hidden" name="action" value="unverify" />
-                          <button type="submit" className="btn btn-secondary" style={{ padding: '0.25rem 0.5rem', fontSize: '0.8rem' }}>
-                            Unmark
-                          </button>
-                        </>
-                      ) : (
-                        <>
-                          <span style={{ color: 'var(--text-muted)', marginRight: '0.5rem' }}>No</span>
-                          <input type="hidden" name="action" value="verify" />
-                          <button type="submit" className="btn btn-primary" style={{ padding: '0.25rem 0.5rem', fontSize: '0.8rem' }}>
-                            Mark paid
-                          </button>
-                        </>
-                      )}
-                    </form>
+                    <SetPaymentVerifiedButton
+                      credentialId={p.id}
+                      action={p.payment_verified_at ? 'unverify' : 'verify'}
+                      isVerified={!!p.payment_verified_at}
+                    />
                   </td>
                 </tr>
               ))

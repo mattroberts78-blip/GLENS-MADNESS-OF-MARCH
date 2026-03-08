@@ -5,8 +5,7 @@ import { getSessionFromCookieHeader } from '@/lib/auth/session';
 export async function POST(request: NextRequest) {
   const session = getSessionFromCookieHeader(request.headers.get('cookie'));
   if (!session || !session.isAdmin) {
-    const url = new URL('/login', request.url);
-    return NextResponse.redirect(url, 302);
+    return NextResponse.json({ ok: false }, { status: 401 });
   }
 
   const formData = await request.formData();
@@ -21,6 +20,5 @@ export async function POST(request: NextRequest) {
     `;
   }
 
-  const url = new URL('/admin', request.url);
-  return NextResponse.redirect(url, 302);
+  return NextResponse.json({ ok: true });
 }
