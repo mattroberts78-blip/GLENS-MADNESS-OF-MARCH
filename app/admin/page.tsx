@@ -2,25 +2,6 @@ import { redirect } from 'next/navigation';
 import { sql } from '@vercel/postgres';
 import { getSession } from '@/lib/auth/session';
 
-async function setPaymentVerified(formData: FormData) {
-  'use server';
-
-  const session = getSession();
-  if (!session || !session.isAdmin) redirect('/login');
-
-  const id = Number(formData.get('credentialId'));
-  const action = formData.get('action'); // 'verify' or 'unverify'
-
-  if (Number.isNaN(id)) return;
-
-  await sql`
-    UPDATE credentials
-    SET payment_verified_at = ${action === 'verify' ? new Date().toISOString() : null}
-    WHERE id = ${id} AND LOWER(TRIM(username)) <> 'admin'
-  `;
-  redirect('/admin');
-}
-
 export default async function AdminPage() {
   const session = getSession();
 
@@ -90,7 +71,7 @@ export default async function AdminPage() {
                   <td style={{ padding: '0.5rem 0.75rem', borderTop: '1px solid var(--border)' }}>{p.username}</td>
                   <td style={{ padding: '0.5rem 0.75rem', borderTop: '1px solid var(--border)' }}>{p.entry_count}</td>
                   <td style={{ padding: '0.5rem 0.75rem', borderTop: '1px solid var(--border)' }}>
-                    <form action={setPaymentVerified} style={{ display: 'inline' }}>
+                    <form action="/api/admin/set-payment-verified" method="POST" style={{ display: 'inline' }}>
                       <input type="hidden" name="credentialId" value={p.id} />
                       {p.payment_verified_at ? (
                         <>
