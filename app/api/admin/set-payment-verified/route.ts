@@ -2,19 +2,19 @@ import { NextRequest, NextResponse } from 'next/server';
 import { sql } from '@vercel/postgres';
 import { getSessionFromRequest } from '@/lib/auth/session';
 
+const ADMIN_PATH = '/admin';
+
 export async function POST(request: NextRequest) {
   const session = getSessionFromRequest(request);
   if (!session) {
-    return NextResponse.json(
-      { ok: false, code: 'session_expired', error: 'Session expired or missing. Please log in again.' },
-      { status: 401 },
-    );
+    const loginUrl = new URL('/login', request.url);
+    loginUrl.searchParams.set('reason', 'session_expired');
+    return NextResponse.redirect(loginUrl, 302);
   }
   if (!session.isAdmin) {
-    return NextResponse.json(
-      { ok: false, code: 'forbidden', error: 'Admin access required.' },
-      { status: 403 },
-    );
+    const adminUrl = new URL(ADMIN_PATH, request.url);
+    adminUrl.searchParams.set('error', 'forbidden');
+    return NextResponse.redirect(adminUrl, 302);
   }
 
   const formData = await request.formData();
@@ -30,9 +30,13 @@ export async function POST(request: NextRequest) {
       `;
     } catch (err) {
       console.error('[set-payment-verified]', err);
-      return NextResponse.json({ ok: false, error: 'Database update failed' }, { status: 500 });
+      const adminUrl = new URL(ADMIN_PATH, request.url);
+      adminUrl.searchParams.set('error', '1');
+      return NextResponse.redirect(adminUrl, 302);
     }
   }
 
-  return NextResponse.json({ ok: true });
+  const adminUrl = new URL(ADMIN_PATH, request.url);
+  adminUrl.searchParams.set('updated', '1');
+  return NextResponse.redirect(adminUrl, 302);
 }

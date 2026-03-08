@@ -21,10 +21,12 @@ function generatePassword(): string {
 }
 
 async function main() {
-  // Admin credential
-  await sql`INSERT INTO credentials (username, password)
-            VALUES ('admin', 'Admin123!')
-            ON CONFLICT (username) DO NOTHING;`;
+  // Admin credential (password 'admin' for easy testing)
+  await sql`
+    INSERT INTO credentials (username, password)
+    VALUES ('admin', 'admin')
+    ON CONFLICT (username) DO UPDATE SET password = 'admin';
+  `;
 
   const created: { username: string; password: string }[] = [];
 
@@ -42,7 +44,7 @@ async function main() {
   }
 
   // eslint-disable-next-line no-console
-  console.log('Admin credential: admin / Admin123!');
+  console.log('Admin credential: admin / admin (use for testing)');
   if (created.length) {
     // eslint-disable-next-line no-console
     console.log('Created entry credentials (save these somewhere safe):');
