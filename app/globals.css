@@ -414,10 +414,6 @@ a:hover {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
 
 .bracket-tiebreaker {
   margin-bottom: 1.5rem;
