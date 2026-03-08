@@ -404,7 +404,16 @@ a:hover {
   color: var(--bg);
 }
 
+.bracket-team--tbd {
+  opacity: 0.75;
+  cursor: not-allowed;
+}
+
 .bracket-team__label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

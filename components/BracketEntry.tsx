@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import {
   DEMO_BRACKET_GAMES,
   ROUND_LABELS,
@@ -33,6 +33,38 @@ export function BracketEntry({
   }, []);
 
   const hasRounds = gamesByRound[1]?.length > 0;
+
+  /** Get the winner's team name for a game (from picks). null if not picked yet. */
+  const getWinnerLabel = useCallback(
+    (round: number, slot: number): string | null => {
+      const games = gamesByRound[round];
+      if (!games) return null;
+      const game = games.find((g) => g.slot === slot);
+      if (!game) return null;
+      const pick = picks[game.id];
+      if (pick === undefined) return null;
+      if (round === 1) return pick === 0 ? game.team1.label : game.team2.label;
+      return pick === 0
+        ? getWinnerLabel(round - 1, 2 * slot - 1)
+        : getWinnerLabel(round - 1, 2 * slot);
+    },
+    [gamesByRound, picks]
+  );
+
+  /** For rounds 2+, get the two team labels (winners of feeder games). */
+  const getDerivedTeams = useCallback(
+    (round: number, slot: number): { team1: string; team2: string; ready: boolean } => {
+      const prevRound = round - 1;
+      const t1 = getWinnerLabel(prevRound, 2 * slot - 1);
+      const t2 = getWinnerLabel(prevRound, 2 * slot);
+      return {
+        team1: t1 ?? `Winner of ${ROUND_LABELS[prevRound]} · Game ${2 * slot - 1}`,
+        team2: t2 ?? `Winner of ${ROUND_LABELS[prevRound]} · Game ${2 * slot}`,
+        ready: t1 != null && t2 != null,
+      };
+    },
+    [getWinnerLabel]
+  );
 
   const pick = (gameId: string, team: 0 | 1) => {
     if (locked) return;
@@ -70,35 +102,44 @@ export function BracketEntry({
         >
           <h2 className="bracket-round__title">{ROUND_LABELS[round]}</h2>
           <div className="bracket-round__games">
-            {gamesByRound[round]?.map((game) => (
-              <div key={game.id} className="bracket-game">
-                <button
-                  type="button"
-                  onClick={() => pick(game.id, 0)}
-                  disabled={locked}
-                  className={`bracket-team ${picks[game.id] === 0 ? 'bracket-team--picked' : ''}`}
-                  title={`Pick ${game.team1.label}`}
-                >
-                  {game.team1.seed > 0 && (
-                    <span className="bracket-team__seed">{game.team1.seed}</span>
-                  )}
-                  <span className="bracket-team__label">{game.team1.label}</span>
-                </button>
-                <span className="bracket-game__vs">vs</span>
-                <button
-                  type="button"
-                  onClick={() => pick(game.id, 1)}
-                  disabled={locked}
-                  className={`bracket-team ${picks[game.id] === 1 ? 'bracket-team--picked' : ''}`}
-                  title={`Pick ${game.team2.label}`}
-                >
-                  {game.team2.seed > 0 && (
-                    <span className="bracket-team__seed">{game.team2.seed}</span>
-                  )}
-                  <span className="bracket-team__label">{game.team2.label}</span>
-                </button>
-              </div>
-            ))}
+            {gamesByRound[round]?.map((game) => {
+              const isRound1 = round === 1;
+              const derived = !isRound1 ? getDerivedTeams(round, game.slot) : null;
+              const team1Label = isRound1 ? game.team1.label : (derived?.team1 ?? '');
+              const team2Label = isRound1 ? game.team2.label : (derived?.team2 ?? '');
+              const canPick = isRound1 || (derived?.ready ?? false);
+              const gameDisabled = locked || !canPick;
+
+              return (
+                <div key={game.id} className="bracket-game">
+                  <button
+                    type="button"
+                    onClick={() => pick(game.id, 0)}
+                    disabled={gameDisabled}
+                    className={`bracket-team ${picks[game.id] === 0 ? 'bracket-team--picked' : ''}${!canPick ? ' bracket-team--tbd' : ''}`}
+                    title={canPick ? `Pick ${team1Label}` : undefined}
+                  >
+                    {isRound1 && game.team1.seed > 0 && (
+                      <span className="bracket-team__seed">{game.team1.seed}</span>
+                    )}
+                    <span className="bracket-team__label">{team1Label}</span>
+                  </button>
+                  <span className="bracket-game__vs">vs</span>
+                  <button
+                    type="button"
+                    onClick={() => pick(game.id, 1)}
+                    disabled={gameDisabled}
+                    className={`bracket-team ${picks[game.id] === 1 ? 'bracket-team--picked' : ''}${!canPick ? ' bracket-team--tbd' : ''}`}
+                    title={canPick ? `Pick ${team2Label}` : undefined}
+                  >
+                    {isRound1 && game.team2.seed > 0 && (
+                      <span className="bracket-team__seed">{game.team2.seed}</span>
+                    )}
+                    <span className="bracket-team__label">{team2Label}</span>
+                  </button>
+                </div>
+              );
+            })}
           </div>
         </section>
       ))}

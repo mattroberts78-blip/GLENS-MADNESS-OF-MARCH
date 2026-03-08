@@ -1,11 +1,32 @@
 /**
  * Demo bracket structure for the entry UI (63 games, 6 rounds).
+ * Round 1 uses 64 random team names (4 regions × 16 teams).
  * When a real contest exists, replace with API/db data.
  */
 
 const REGIONS = ['East', 'West', 'South', 'Midwest'] as const;
 const R1_MATCHUPS: [number, number][] = [
   [1, 16], [8, 9], [4, 13], [5, 12], [2, 15], [7, 10], [3, 14], [6, 11],
+];
+
+// 64 random team names (college-style) — one per Round 1 slot
+const TEAM_NAMES = [
+  'Riverside Hawks', 'State Tech Titans', 'Central Valley Bears', 'Metro State Cougars',
+  'Northern Wolves', 'Lakeview Eagles', 'Capital City Rams', 'Valley State Broncos',
+  'Mountain View Wildcats', 'Pacific Coast Tigers', 'Desert State Sun Devils', 'Prairie Tech Engineers',
+  'Bayou Gators', 'Highland Scots', 'Twin Cities Huskies', 'Golden Gate Seawolves',
+  'Midland Mustangs', 'Coastal Carolina Chanticleers', 'Blue Ridge Mountaineers', 'Lakeshore Lakers',
+  'Canyon State Roadrunners', 'Pine Valley Owls', 'Riverbend Racers', 'Summit State Miners',
+  'Thunder Bay Storm', 'Silver City Aggies', 'Greenfield Terriers', 'Rocky Peak Falcons',
+  'Harbor State Mariners', 'Plains Tech Bison', 'Cedar Falls Panthers', 'Redwood Giants',
+  'Frostburg Bobcats', 'Sunrise Valley Vandals', 'Mill Creek Crusaders', 'Oakwood Spartans',
+  'Cape Coast Seahawks', 'Meadowbrook Jayhawks', 'Stonewall Generals', 'Crystal Lake Tritons',
+  'Pioneer Valley Minutemen', 'Evergreen State Cougars', 'Granite State Wildcats', 'Lone Star Longhorns',
+  'Buckeye Valley Cardinals', 'Palmetto Gamecocks', 'Hoosier State Hoosiers', 'Badger State Badgers',
+  'Gopher State Gophers', 'Hawkeye State Hawkeyes', 'Volunteer State Volunteers', 'Tar Heel State Heels',
+  'Crimson Tide State', 'Tiger Bay Bengals', 'Seminole State Seminoles', 'Hurricane Coast Canes',
+  'Rebel State Rebels', 'Razorback Valley Hogs', 'Wildcat Mountain Cats', 'Bearcat State Bearcats',
+  'Bruin Coast Bruins', 'Trojan State Trojans', 'Duck Pond Ducks', 'Beaver State Beavers',
 ];
 
 export type BracketGame = {
@@ -19,17 +40,20 @@ export type BracketGame = {
 function buildGames(): BracketGame[] {
   const games: BracketGame[] = [];
   let slot = 0;
+  let teamIndex = 0;
 
-  // Round 1: 32 games (4 regions × 8 matchups)
+  // Round 1: 32 games (4 regions × 8 matchups), 64 teams from TEAM_NAMES
   REGIONS.forEach((region) => {
     R1_MATCHUPS.forEach(([s1, s2]) => {
       slot += 1;
+      const name1 = TEAM_NAMES[teamIndex++] ?? `${region} #${s1}`;
+      const name2 = TEAM_NAMES[teamIndex++] ?? `${region} #${s2}`;
       games.push({
         id: `r1-${slot}`,
         round: 1,
         slot,
-        team1: { label: `${region} #${s1}`, seed: s1 },
-        team2: { label: `${region} #${s2}`, seed: s2 },
+        team1: { label: name1, seed: s1 },
+        team2: { label: name2, seed: s2 },
       });
     });
   });
