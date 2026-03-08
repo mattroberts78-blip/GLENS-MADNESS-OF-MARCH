@@ -16,6 +16,24 @@ export type Session = {
   isAdmin: boolean;
 };
 
+/** Parse session from a Cookie header value (e.g. request.headers.get('cookie')). Use in Route Handlers when cookies() may not see the request cookie. */
+export function getSessionFromCookieHeader(cookieHeader: string | null): Session | null {
+  if (!cookieHeader) return null;
+  const match = cookieHeader.match(new RegExp(`${SESSION_COOKIE}=([^;]+)`));
+  if (!match) return null;
+  const raw = match[1].trim();
+  try {
+    const value = raw.startsWith('"') ? raw.slice(1, -1).replace(/\\"/g, '"') : decodeURIComponent(raw);
+    return JSON.parse(value) as Session;
+  } catch {
+    try {
+      return JSON.parse(raw) as Session;
+    } catch {
+      return null;
+    }
+  }
+}
+
 export function getSession(): Session | null {
   const cookie = cookies().get(SESSION_COOKIE);
   if (!cookie) return null;

@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { sql } from '@vercel/postgres';
-import { getSession } from '@/lib/auth/session';
+import { getSessionFromCookieHeader } from '@/lib/auth/session';
 
 export async function POST(request: NextRequest) {
-  const session = getSession();
+  const session = getSessionFromCookieHeader(request.headers.get('cookie'));
   if (!session || !session.isAdmin) {
     const url = new URL('/login', request.url);
     return NextResponse.redirect(url, 302);
