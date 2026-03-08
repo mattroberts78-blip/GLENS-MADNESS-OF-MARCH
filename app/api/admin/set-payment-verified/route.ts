@@ -1,24 +1,29 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { sql } from '@vercel/postgres';
-import { SESSION_COOKIE_NAME, decodeSession } from '@/lib/auth/session';
+import { getSessionFromRequest } from '@/lib/auth/session';
 
 export async function POST(request: NextRequest) {
-  const raw = request.cookies.get(SESSION_COOKIE_NAME)?.value;
-  const session = decodeSession(raw);
-  if (!session || !session.isAdmin) {
+  const session = getSessionFromRequest(request);
+  const isAdmin = session?.isAdmin === true || session?.isAdmin === 'true';
+  if (!session || !isAdmin) {
     return NextResponse.json({ ok: false }, { status: 401 });
   }
 
   const formData = await request.formData();
   const id = Number(formData.get('credentialId'));
-  const action = formData.get('action');
+  const action = String(formData.get('action') ?? '');
 
   if (!Number.isNaN(id)) {
-    await sql`
-      UPDATE credentials
-      SET payment_verified_at = ${action === 'verify' ? new Date().toISOString() : null}
-      WHERE id = ${id} AND LOWER(TRIM(username)) <> 'admin'
-    `;
+    try {
+      await sql`
+        UPDATE credentials
+        SET payment_verified_at = ${action === 'verify' ? new Date().toISOString() : null}
+        WHERE id = ${id} AND LOWER(TRIM(username)) <> 'admin'
+      `;
+    } catch (err) {
+      console.error('[set-payment-verified]', err);
+      return NextResponse.json({ ok: false, error: 'Database update failed' }, { status: 500 });
+    }
   }
 
   return NextResponse.json({ ok: true });

@@ -12,8 +12,10 @@ type Participant = {
 export function PaymentTable({ participants: initial }: { participants: Participant[] }) {
   const [participants, setParticipants] = useState(initial);
   const [busy, setBusy] = useState<number | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   async function toggle(credentialId: number, action: 'verify' | 'unverify') {
+    setError(null);
     setBusy(credentialId);
     const body = new FormData();
     body.set('credentialId', String(credentialId));
@@ -24,6 +26,7 @@ export function PaymentTable({ participants: initial }: { participants: Particip
         body,
         credentials: 'include',
       });
+      const data = res.ok ? null : await res.json().catch(() => ({}));
       if (res.ok) {
         setParticipants((prev) =>
           prev.map((p) =>
@@ -32,15 +35,22 @@ export function PaymentTable({ participants: initial }: { participants: Particip
               : p,
           ),
         );
+      } else if (res.status === 401) {
+        setError('Session expired. Please log in again.');
+      } else {
+        setError((data as { error?: string })?.error ?? 'Something went wrong. Please try again.');
       }
     } catch {
-      // ignore
+      setError('Request failed. Please try again.');
     }
     setBusy(null);
   }
 
   return (
     <>
+      {error && (
+        <p style={{ color: 'var(--error)', fontSize: '0.9rem', marginBottom: '1rem' }}>{error}</p>
+      )}
       <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '1rem' }}>
         Check &quot;Payment verified&quot; when you&apos;ve confirmed they paid. Only verified participants count toward the overall winner.
       </p>

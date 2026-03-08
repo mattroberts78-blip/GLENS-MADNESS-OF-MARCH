@@ -56,6 +56,23 @@ export function decodeSession(cookieValue: string | undefined | null): Session |
   return decode(cookieValue);
 }
 
+/** Get session from a Request/NextRequest (tries request.cookies then Cookie header). */
+export function getSessionFromRequest(request: Request): Session | null {
+  const nextRequest = request as Request & { cookies?: { get: (name: string) => { value?: string } | undefined } };
+  const fromCookies = nextRequest.cookies?.get?.(SESSION_COOKIE)?.value;
+  if (fromCookies) return decodeSession(fromCookies);
+  const cookieHeader = request.headers.get('cookie');
+  if (!cookieHeader) return null;
+  const match = cookieHeader.match(new RegExp(`${SESSION_COOKIE}=([^;]+)`));
+  const raw = match ? match[1].trim().replace(/^"|"$/g, '') : null;
+  if (!raw) return null;
+  try {
+    return decodeSession(decodeURIComponent(raw));
+  } catch {
+    return decodeSession(raw);
+  }
+}
+
 /** Build cookie name + value + options for setting on a NextResponse. */
 export function sessionCookieForResponse(session: Session) {
   return {
