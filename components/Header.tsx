@@ -27,6 +27,7 @@ export function Header() {
         ) : (
           <>
             <Link href="/login" className="nav-link nav-link-cta">Log in</Link>
+            <Link href="/create-account" className="nav-link">Create account</Link>
             <Link href="/admin" className="nav-link nav-link-muted">Admin</Link>
           </>
         )}

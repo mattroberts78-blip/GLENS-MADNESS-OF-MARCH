@@ -13,7 +13,7 @@ export default async function ScoreboardPage() {
       </p>
       <h1 className="page-title">Scoreboard</h1>
       <p className="page-subtitle">
-        Live standings and max remaining points will appear here once the contest has games and results.
+        Live standings and max remaining points will appear here once the contest has games and results. Only participants with payment verified by admin will count toward the overall winner.
       </p>
     </main>
   );

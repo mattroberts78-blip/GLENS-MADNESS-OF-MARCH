@@ -58,8 +58,11 @@ export default async function HomePage() {
         NCAA March Madness bracket contest — fill out your picks and follow the standings.
       </p>
       <nav style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
-        <Link href="/login" className="btn btn-primary">
-          Participant login
+        <Link href="/create-account" className="btn btn-primary">
+          Create account
+        </Link>
+        <Link href="/login" className="btn btn-secondary">
+          Log in
         </Link>
         <Link href="/admin" className="btn btn-secondary">
           Admin

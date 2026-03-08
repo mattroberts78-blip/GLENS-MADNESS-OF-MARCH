@@ -2,13 +2,14 @@
 -- Scoring: points = round (1-6) × seed of winning team picked
 -- Tiebreaker: predicted total points in championship game
 
--- Pre-configured login credentials (one per person; admin assigns after payment)
+-- Pre-configured login credentials; users can self-create (email + PIN) or admin creates
 CREATE TABLE IF NOT EXISTS credentials (
-  id         SERIAL PRIMARY KEY,
-  username   TEXT NOT NULL UNIQUE,
-  password   TEXT NOT NULL,
-  used_at    TIMESTAMPTZ,
-  created_at TIMESTAMPTZ DEFAULT NOW()
+  id                  SERIAL PRIMARY KEY,
+  username            TEXT NOT NULL UNIQUE,
+  password            TEXT NOT NULL,
+  used_at             TIMESTAMPTZ,
+  payment_verified_at TIMESTAMPTZ,
+  created_at          TIMESTAMPTZ DEFAULT NOW()
 );
 
 -- Person = one credential. Entries = their brackets (multiple per person).

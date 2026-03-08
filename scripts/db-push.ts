@@ -14,10 +14,22 @@ config();
 const schemaPath = join(process.cwd(), 'lib', 'db', 'schema.sql');
 const schema = readFileSync(schemaPath, 'utf-8');
 
+const migrationPath = join(process.cwd(), 'lib', 'db', 'migrations', 'add_payment_verified.sql');
+let migration = '';
+try {
+  migration = readFileSync(migrationPath, 'utf-8');
+} catch {
+  // optional migration
+}
+
 const statements = schema
   .split(/;\s*\n/)
   .map((s) => s.replace(/--[^\n]*/g, '').trim())
   .filter(Boolean);
+
+const migrationStatements = migration
+  ? migration.split(/;\s*\n/).map((s) => s.replace(/--[^\n]*/g, '').trim()).filter(Boolean)
+  : [];
 
 async function main() {
   if (!process.env.POSTGRES_URL) {
@@ -26,6 +38,9 @@ async function main() {
   }
   try {
     for (const stmt of statements) {
+      await sql.query(stmt + ';');
+    }
+    for (const stmt of migrationStatements) {
       await sql.query(stmt + ';');
     }
     console.log('Schema applied successfully.');

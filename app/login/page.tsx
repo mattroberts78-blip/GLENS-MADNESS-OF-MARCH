@@ -46,21 +46,21 @@ export default function LoginPage({
     <main className="page-container" style={{ maxWidth: 420 }}>
       <h1 className="page-title">Log in</h1>
       <p className="page-subtitle">
-        Use the username and password you received for Glen&apos;s Madness of March.
+        Use your email and 4-digit PIN for Glen&apos;s Madness of March.
       </p>
       {showError && (
         <p style={{ color: 'var(--error)', marginBottom: '1rem', fontSize: '0.9rem' }}>
-          Invalid username or password.
+          Invalid email or PIN.
         </p>
       )}
       <form action={login} className="card" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
         <label style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', fontSize: '0.9rem', fontWeight: 500 }}>
-          Username
-          <input type="text" name="username" autoComplete="username" className="input" />
+          Email
+          <input type="text" name="username" autoComplete="username" placeholder="you@example.com" className="input" />
         </label>
         <label style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', fontSize: '0.9rem', fontWeight: 500 }}>
-          Password
-          <input type="password" name="password" autoComplete="current-password" className="input" />
+          4-digit PIN
+          <input type="password" name="password" autoComplete="current-password" placeholder="••••" className="input" style={{ width: 120 }} />
         </label>
         <button type="submit" className="btn btn-primary" style={{ marginTop: '0.25rem' }}>
           Log in
