@@ -15,7 +15,7 @@ async function setPaymentVerified(formData: FormData) {
 
   await sql`
     UPDATE credentials
-    SET payment_verified_at = ${action === 'verify' ? new Date() : null}
+    SET payment_verified_at = ${action === 'verify' ? new Date().toISOString() : null}
     WHERE id = ${id} AND username <> 'admin'
   `;
   redirect('/admin');
