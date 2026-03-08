@@ -4,8 +4,7 @@ import { getSessionFromRequest } from '@/lib/auth/session';
 
 export async function POST(request: NextRequest) {
   const session = getSessionFromRequest(request);
-  const isAdmin = session?.isAdmin === true || session?.isAdmin === 'true';
-  if (!session || !isAdmin) {
+  if (!session || !session.isAdmin) {
     return NextResponse.json({ ok: false }, { status: 401 });
   }
 
