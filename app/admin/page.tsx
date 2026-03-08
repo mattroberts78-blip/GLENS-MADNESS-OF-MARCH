@@ -28,20 +28,28 @@ export default async function AdminPage() {
     redirect('/login');
   }
 
-  const participantsResult = await sql`
-    SELECT c.id, c.username, c.payment_verified_at,
-           (SELECT COUNT(*) FROM entries e WHERE e.credential_id = c.id) AS entry_count
-    FROM credentials c
-    WHERE LOWER(TRIM(c.username)) <> 'admin'
-    ORDER BY c.created_at DESC
-    LIMIT 100
-  `;
-  const participants = participantsResult.rows as {
+  let participants: {
     id: number;
     username: string;
     payment_verified_at: string | null;
     entry_count: string;
-  }[];
+  }[] = [];
+  let dbError: string | null = null;
+
+  try {
+    const participantsResult = await sql`
+      SELECT c.id, c.username, c.payment_verified_at,
+             (SELECT COUNT(*) FROM entries e WHERE e.credential_id = c.id) AS entry_count
+      FROM credentials c
+      WHERE LOWER(TRIM(c.username)) <> 'admin'
+      ORDER BY c.created_at DESC
+      LIMIT 100
+    `;
+    participants = participantsResult.rows as typeof participants;
+  } catch (err: unknown) {
+    console.error('[admin page]', err);
+    dbError = err instanceof Error ? err.message : 'Unknown database error';
+  }
 
   return (
     <main className="page-container" style={{ maxWidth: 820 }}>
@@ -52,6 +60,12 @@ export default async function AdminPage() {
 
       <section className="card">
         <h2 className="card-title">Participants</h2>
+        {dbError ? (
+          <p style={{ color: 'var(--error)', fontSize: '0.9rem', marginBottom: '1rem' }}>
+            Database error: {dbError}
+          </p>
+        ) : (
+        <>
         <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '1rem' }}>
           Check &quot;Payment verified&quot; when you&apos;ve confirmed they paid. Only verified participants count toward the overall winner.
         </p>
@@ -102,6 +116,8 @@ export default async function AdminPage() {
             )}
           </tbody>
         </table>
+        </>
+        )}
       </section>
     </main>
   );

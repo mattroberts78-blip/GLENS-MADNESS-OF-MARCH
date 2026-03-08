@@ -1,7 +1,7 @@
 export default function LoginPage({
   searchParams,
 }: {
-  searchParams?: { error?: string };
+  searchParams?: { error?: string; msg?: string };
 }) {
   const showError = searchParams?.error === '1';
 
@@ -13,7 +13,7 @@ export default function LoginPage({
       </p>
       {showError && (
         <p style={{ color: 'var(--error)', marginBottom: '1rem', fontSize: '0.9rem' }}>
-          Invalid credentials.
+          Invalid credentials.{searchParams?.msg ? ` (${searchParams.msg})` : ''}
         </p>
       )}
       <form action="/api/auth/login" method="POST" className="card" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
