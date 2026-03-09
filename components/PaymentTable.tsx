@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useFormState, useFormStatus } from 'react-dom';
 import { markPaymentVerified } from '@/app/admin/actions';
 
@@ -35,11 +35,19 @@ export function PaymentTable({
   const [state, formAction] = useFormState(action, { ok: false });
   const safeState = state ?? { ok: false };
 
+  // Update list from action result so we don't rely on reload/cache
+  const [list, setList] = useState(participants);
   useEffect(() => {
-    if (safeState.ok) {
-      window.location.href = '/admin?r=' + Date.now();
+    if (safeState.ok && safeState.updatedId != null) {
+      setList((prev) =>
+        prev.map((p) =>
+          p.id === safeState.updatedId
+            ? { ...p, payment_verified_at: new Date().toISOString() }
+            : p,
+        ),
+      );
     }
-  }, [safeState]);
+  }, [safeState.ok, safeState.updatedId]);
 
   return (
     <>
@@ -59,14 +67,14 @@ export function PaymentTable({
           </tr>
         </thead>
         <tbody>
-          {participants.length === 0 ? (
+          {list.length === 0 ? (
             <tr>
               <td colSpan={3} style={{ padding: '1rem 0.75rem', color: 'var(--text-muted)' }}>
                 No participants yet. Users create accounts from the home page.
               </td>
             </tr>
           ) : (
-            participants.map((p) => (
+            list.map((p) => (
               <tr key={p.id}>
                 <td style={{ padding: '0.5rem 0.75rem', borderTop: '1px solid var(--border)' }}>{p.username}</td>
                 <td style={{ padding: '0.5rem 0.75rem', borderTop: '1px solid var(--border)' }}>{p.entry_count}</td>

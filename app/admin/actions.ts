@@ -4,7 +4,7 @@ import { sql } from '@vercel/postgres';
 import { getSession } from '@/lib/auth/session';
 import { revalidatePath } from 'next/cache';
 
-export type MarkPaymentState = { ok: boolean; error?: string };
+export type MarkPaymentState = { ok: boolean; error?: string; updatedId?: number };
 
 export async function markPaymentVerified(
   _prev: MarkPaymentState,
@@ -33,7 +33,7 @@ export async function markPaymentVerified(
       return { ok: false, error: `Update affected 0 rows (credentialId=${id}). Check participant id.` };
     }
     revalidatePath('/admin');
-    return { ok: true };
+    return { ok: true, updatedId: id };
   } catch (err) {
     console.error('[markPaymentVerified]', err);
     return { ok: false, error: 'Database update failed.' };
