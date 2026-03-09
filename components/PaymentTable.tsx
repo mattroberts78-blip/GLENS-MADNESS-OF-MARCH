@@ -1,8 +1,3 @@
-'use client';
-
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-
 type Participant = {
   id: number;
   username: string;
@@ -10,46 +5,9 @@ type Participant = {
   entry_count: string;
 };
 
-export function PaymentTable({
-  participants,
-}: {
-  participants: Participant[];
-}) {
-  const router = useRouter();
-  const [busyId, setBusyId] = useState<number | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  async function handleClick(p: Participant, action: 'verify' | 'unverify') {
-    setError(null);
-    setBusyId(p.id);
-    try {
-      const res = await fetch('/api/verify-payment', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ credentialId: p.id, action }),
-      });
-      const data = await res.json();
-      setBusyId(null);
-      alert(`API response: ${JSON.stringify(data)}`);
-      if (data.ok) {
-        router.refresh();
-      } else {
-        setError(data.error ?? 'Something went wrong');
-      }
-    } catch (err: unknown) {
-      setBusyId(null);
-      const msg = err instanceof Error ? err.message : String(err);
-      alert(`Fetch error: ${msg}`);
-      setError(msg);
-    }
-  }
-
+export function PaymentTable({ participants }: { participants: Participant[] }) {
   return (
     <>
-      {error && (
-        <p style={{ color: 'var(--error)', fontSize: '0.9rem', marginBottom: '1rem' }}>{error}</p>
-      )}
       <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '1rem' }}>
         Check &quot;Payment verified&quot; when you&apos;ve confirmed they paid. Only verified
         participants count toward the overall winner.
@@ -78,28 +36,24 @@ export function PaymentTable({
                   {p.payment_verified_at ? (
                     <>
                       <span style={{ color: 'var(--success)', marginRight: '0.5rem' }}>Yes</span>
-                      <button
-                        type="button"
-                        className="btn btn-secondary"
-                        style={{ padding: '0.25rem 0.5rem', fontSize: '0.8rem' }}
-                        disabled={busyId === p.id}
-                        onClick={() => handleClick(p, 'unverify')}
-                      >
-                        {busyId === p.id ? '…' : 'Unmark'}
-                      </button>
+                      <form action="/api/verify-payment" method="POST" style={{ display: 'inline' }}>
+                        <input type="hidden" name="credentialId" value={p.id} />
+                        <input type="hidden" name="action" value="unverify" />
+                        <button type="submit" className="btn btn-secondary" style={{ padding: '0.25rem 0.5rem', fontSize: '0.8rem' }}>
+                          Unmark
+                        </button>
+                      </form>
                     </>
                   ) : (
                     <>
                       <span style={{ color: 'var(--text-muted)', marginRight: '0.5rem' }}>No</span>
-                      <button
-                        type="button"
-                        className="btn btn-primary"
-                        style={{ padding: '0.25rem 0.5rem', fontSize: '0.8rem' }}
-                        disabled={busyId === p.id}
-                        onClick={() => handleClick(p, 'verify')}
-                      >
-                        {busyId === p.id ? '…' : 'Mark paid'}
-                      </button>
+                      <form action="/api/verify-payment" method="POST" style={{ display: 'inline' }}>
+                        <input type="hidden" name="credentialId" value={p.id} />
+                        <input type="hidden" name="action" value="verify" />
+                        <button type="submit" className="btn btn-primary" style={{ padding: '0.25rem 0.5rem', fontSize: '0.8rem' }}>
+                          Mark paid
+                        </button>
+                      </form>
                     </>
                   )}
                 </td>

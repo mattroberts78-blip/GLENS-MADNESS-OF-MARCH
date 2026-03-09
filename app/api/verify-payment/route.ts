@@ -3,49 +3,31 @@ import { sql } from '@vercel/postgres';
 import { SESSION_COOKIE_NAME, decodeSession } from '@/lib/auth/session';
 
 export async function POST(request: NextRequest) {
-  // Read session directly from request cookies (same way middleware does for /admin)
   const raw = request.cookies.get(SESSION_COOKIE_NAME)?.value;
   const session = decodeSession(raw);
 
-  // Also check raw Cookie header
-  const cookieHeader = request.headers.get('cookie') ?? '(no cookie header)';
-  const allCookieNames = request.cookies.getAll().map(c => c.name);
-
   if (!session || !session.isAdmin) {
-    return NextResponse.json(
-      {
-        ok: false,
-        error: 'Not authorized',
-        hasCookie: !!raw,
-        decoded: !!session,
-        cookieHeader: cookieHeader.substring(0, 200),
-        allCookieNames,
-      },
-      { status: 401 },
-    );
+    // Redirect back to admin with debug info visible in URL
+    const url = new URL('/admin', request.url);
+    url.searchParams.set('error', 'no-session');
+    url.searchParams.set('hasCookie', String(!!raw));
+    url.searchParams.set('cookieHeader', (request.headers.get('cookie') ?? 'none').substring(0, 100));
+    return NextResponse.redirect(url, 303);
   }
 
-  const body = await request.json();
-  const id = Number(body.credentialId);
-  const action = String(body.action ?? '');
+  const formData = await request.formData();
+  const id = Number(formData.get('credentialId'));
+  const action = String(formData.get('action') ?? '');
 
-  if (!Number.isFinite(id)) {
-    return NextResponse.json({ ok: false, error: 'Invalid id' }, { status: 400 });
+  if (Number.isFinite(id)) {
+    const ts = action === 'verify' ? new Date().toISOString() : null;
+    await sql`
+      UPDATE credentials
+      SET payment_verified_at = ${ts}
+      WHERE id = ${id} AND LOWER(TRIM(username)) <> 'admin'
+    `;
   }
 
-  const ts = action === 'verify' ? new Date().toISOString() : null;
-
-  const result = await sql`
-    UPDATE credentials
-    SET payment_verified_at = ${ts}
-    WHERE id = ${id} AND LOWER(TRIM(username)) <> 'admin'
-  `;
-
-  const check = await sql`SELECT id, payment_verified_at FROM credentials WHERE id = ${id}`;
-
-  return NextResponse.json({
-    ok: true,
-    rowCount: result.rowCount,
-    after: check.rows[0],
-  });
+  const url = new URL('/admin', request.url);
+  return NextResponse.redirect(url, 303);
 }
