@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { markPaymentVerified } from '@/app/admin/actions';
 
 type Participant = {
   id: number;
@@ -21,22 +20,27 @@ export function PaymentTable({
   const [error, setError] = useState<string | null>(null);
 
   async function handleClick(p: Participant, action: 'verify' | 'unverify') {
-    alert(`handleClick fired: id=${p.id} action=${action}`);
     setError(null);
     setBusyId(p.id);
     try {
-      const result = await markPaymentVerified(p.id, action);
+      const res = await fetch('/api/verify-payment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ credentialId: p.id, action }),
+      });
+      const data = await res.json();
       setBusyId(null);
-      alert(`Action result: ${JSON.stringify(result)}`);
-      if (result?.ok) {
+      alert(`API response: ${JSON.stringify(data)}`);
+      if (data.ok) {
         router.refresh();
-      } else if (result?.error) {
-        setError(result.error + (result.debug ? ` | ${result.debug}` : ''));
+      } else {
+        setError(data.error ?? 'Something went wrong');
       }
     } catch (err: unknown) {
       setBusyId(null);
       const msg = err instanceof Error ? err.message : String(err);
-      alert(`Action THREW: ${msg}`);
+      alert(`Fetch error: ${msg}`);
       setError(msg);
     }
   }
