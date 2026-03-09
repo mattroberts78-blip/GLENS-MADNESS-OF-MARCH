@@ -1,6 +1,6 @@
 # Glen's Madness of March
 
-NCAA March Madness bracket contest — web app for running a local pool with round×seed scoring.
+NCAA March Madness bracket contest — web app for running a local pool with scoring based on seed + round bonus (higher rounds are worth more).
 
 ## Branding
 

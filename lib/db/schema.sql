@@ -1,5 +1,11 @@
 -- GLENS_MADNESS: NCAA Bracket Contest
--- Scoring: points = round (1-6) × seed of winning team picked
+-- Scoring: for each correct pick, points = team seed + round bonus, where:
+--   Round 1 bonus = 1
+--   Round 2 bonus = 2
+--   Round 3 bonus = 4
+--   Round 4 bonus = 8
+--   Round 5 bonus = 16
+--   Round 6 (Championship) bonus = 32
 -- Tiebreaker: predicted total points in championship game
 
 -- Pre-configured login credentials; users can self-create (email + PIN) or admin creates

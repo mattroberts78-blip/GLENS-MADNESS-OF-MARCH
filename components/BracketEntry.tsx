@@ -9,6 +9,10 @@ import {
 
 type Picks = Record<string, 0 | 1>;
 
+const REGIONS = ['East', 'West', 'South', 'Midwest'] as const;
+type Region = (typeof REGIONS)[number];
+type TabKey = Region | 'Final Four';
+
 export function BracketEntry({
   entryName,
   entryId,
@@ -21,6 +25,7 @@ export function BracketEntry({
   const [picks, setPicks] = useState<Picks>({});
   const [championshipTotal, setChampionshipTotal] = useState('');
   const [saved, setSaved] = useState(false);
+  const [activeTab, setActiveTab] = useState<TabKey>('East');
 
   const gamesByRound = useMemo(() => {
     const map: Record<number, BracketGame[]> = {};
@@ -31,6 +36,43 @@ export function BracketEntry({
     });
     return map;
   }, []);
+
+  const getRegionGames = useCallback(
+    (round: number, region: Region): BracketGame[] => {
+      const regionIndex = REGIONS.indexOf(region);
+      if (regionIndex === -1) return [];
+      const games = gamesByRound[round] ?? [];
+
+      if (round === 1) {
+        const perRegion = 8;
+        const start = regionIndex * perRegion + 1;
+        const end = start + perRegion - 1;
+        return games.filter((g) => g.slot >= start && g.slot <= end);
+      }
+
+      if (round === 2) {
+        const perRegion = 4;
+        const start = regionIndex * perRegion + 1;
+        const end = start + perRegion - 1;
+        return games.filter((g) => g.slot >= start && g.slot <= end);
+      }
+
+      if (round === 3) {
+        const perRegion = 2;
+        const start = regionIndex * perRegion + 1;
+        const end = start + perRegion - 1;
+        return games.filter((g) => g.slot >= start && g.slot <= end);
+      }
+
+      if (round === 4) {
+        const slot = regionIndex + 1;
+        return games.filter((g) => g.slot === slot);
+      }
+
+      return [];
+    },
+    [gamesByRound]
+  );
 
   const hasRounds = gamesByRound[1]?.length > 0;
 
@@ -95,74 +137,139 @@ export function BracketEntry({
         </p>
       </div>
 
-      <div className="bracket-layout">
-        {([1, 2, 3, 4, 5, 6] as const).map((round) => (
-          <section
-            key={round}
-            className={`bracket-round card ${round === 6 ? 'bracket-round--championship' : ''}`}
+      <div className="bracket-tabs">
+        {REGIONS.map((region) => (
+          <button
+            key={region}
+            type="button"
+            className={`bracket-tab ${activeTab === region ? 'bracket-tab--active' : ''}`}
+            onClick={() => setActiveTab(region)}
           >
-            <h2 className="bracket-round__title">{ROUND_LABELS[round]}</h2>
-            <div className="bracket-round__games">
-              {gamesByRound[round]?.map((game) => {
-                const isRound1 = round === 1;
-                const derived = !isRound1 ? getDerivedTeams(round, game.slot) : null;
-                const team1Label = isRound1 ? game.team1.label : (derived?.team1 ?? '');
-                const team2Label = isRound1 ? game.team2.label : (derived?.team2 ?? '');
-                const canPick = isRound1 || (derived?.ready ?? false);
-                const gameDisabled = locked || !canPick;
-
-                return (
-                  <div key={game.id} className="bracket-game">
-                    <button
-                      type="button"
-                      onClick={() => pick(game.id, 0)}
-                      disabled={gameDisabled}
-                      className={`bracket-team ${picks[game.id] === 0 ? 'bracket-team--picked' : ''}${!canPick ? ' bracket-team--tbd' : ''}`}
-                      title={canPick ? `Pick ${team1Label}` : undefined}
-                    >
-                      {isRound1 && game.team1.seed > 0 && (
-                        <span className="bracket-team__seed">{game.team1.seed}</span>
-                      )}
-                      <span className="bracket-team__label">{team1Label}</span>
-                    </button>
-                    <span className="bracket-game__vs">vs</span>
-                    <button
-                      type="button"
-                      onClick={() => pick(game.id, 1)}
-                      disabled={gameDisabled}
-                      className={`bracket-team ${picks[game.id] === 1 ? 'bracket-team--picked' : ''}${!canPick ? ' bracket-team--tbd' : ''}`}
-                      title={canPick ? `Pick ${team2Label}` : undefined}
-                    >
-                      {isRound1 && game.team2.seed > 0 && (
-                        <span className="bracket-team__seed">{game.team2.seed}</span>
-                      )}
-                      <span className="bracket-team__label">{team2Label}</span>
-                    </button>
-                  </div>
-                );
-              })}
-            </div>
-          </section>
+            {region}
+          </button>
         ))}
+        <button
+          type="button"
+          className={`bracket-tab ${activeTab === 'Final Four' ? 'bracket-tab--active' : ''}`}
+          onClick={() => setActiveTab('Final Four')}
+        >
+          Final Four
+        </button>
       </div>
 
-      <section className="bracket-tiebreaker card">
-        <h2 className="bracket-round__title">Tiebreaker</h2>
-        <p className="page-subtitle" style={{ marginBottom: '0.75rem' }}>
-          Predict the combined total points in the championship game (e.g. 142).
-        </p>
-        <input
-          type="number"
-          min={80}
-          max={250}
-          placeholder="e.g. 142"
-          value={championshipTotal}
-          onChange={(e) => setChampionshipTotal(e.target.value)}
-          disabled={locked}
-          className="input"
-          style={{ maxWidth: 160 }}
-        />
-      </section>
+      {activeTab === 'Final Four' ? (
+        <div className="bracket-layout bracket-layout--final">
+          {([5, 6] as const).map((round) => (
+            <section
+              key={round}
+              className={`bracket-round card ${round === 6 ? 'bracket-round--championship' : ''}`}
+            >
+              <h2 className="bracket-round__title">{ROUND_LABELS[round]}</h2>
+              <div className="bracket-round__games">
+                {gamesByRound[round]?.map((game) => {
+                  const derived = getDerivedTeams(round, game.slot);
+                  const team1Label = derived.team1;
+                  const team2Label = derived.team2;
+                  const canPick = derived.ready;
+                  const gameDisabled = locked || !canPick;
+
+                  return (
+                    <div key={game.id} className="bracket-game">
+                      <button
+                        type="button"
+                        onClick={() => pick(game.id, 0)}
+                        disabled={gameDisabled}
+                        className={`bracket-team ${picks[game.id] === 0 ? 'bracket-team--picked' : ''}${!canPick ? ' bracket-team--tbd' : ''}`}
+                        title={canPick ? `Pick ${team1Label}` : undefined}
+                      >
+                        <span className="bracket-team__label">{team1Label}</span>
+                      </button>
+                      <span className="bracket-game__vs">vs</span>
+                      <button
+                        type="button"
+                        onClick={() => pick(game.id, 1)}
+                        disabled={gameDisabled}
+                        className={`bracket-team ${picks[game.id] === 1 ? 'bracket-team--picked' : ''}${!canPick ? ' bracket-team--tbd' : ''}`}
+                        title={canPick ? `Pick ${team2Label}` : undefined}
+                      >
+                        <span className="bracket-team__label">{team2Label}</span>
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            </section>
+          ))}
+        </div>
+      ) : (
+        <div className="bracket-layout bracket-layout--region">
+          {([1, 2, 3, 4] as const).map((round) => (
+            <section key={round} className="bracket-round card">
+              <h2 className="bracket-round__title">{ROUND_LABELS[round]}</h2>
+              <div className="bracket-round__games">
+                {getRegionGames(round, activeTab as Region).map((game) => {
+                  const isRound1 = round === 1;
+                  const derived = !isRound1 ? getDerivedTeams(round, game.slot) : null;
+                  const team1Label = isRound1 ? game.team1.label : (derived?.team1 ?? '');
+                  const team2Label = isRound1 ? game.team2.label : (derived?.team2 ?? '');
+                  const canPick = isRound1 || (derived?.ready ?? false);
+                  const gameDisabled = locked || !canPick;
+
+                  return (
+                    <div key={game.id} className="bracket-game">
+                      <button
+                        type="button"
+                        onClick={() => pick(game.id, 0)}
+                        disabled={gameDisabled}
+                        className={`bracket-team ${picks[game.id] === 0 ? 'bracket-team--picked' : ''}${!canPick ? ' bracket-team--tbd' : ''}`}
+                        title={canPick ? `Pick ${team1Label}` : undefined}
+                      >
+                        {isRound1 && game.team1.seed > 0 && (
+                          <span className="bracket-team__seed">{game.team1.seed}</span>
+                        )}
+                        <span className="bracket-team__label">{team1Label}</span>
+                      </button>
+                      <span className="bracket-game__vs">vs</span>
+                      <button
+                        type="button"
+                        onClick={() => pick(game.id, 1)}
+                        disabled={gameDisabled}
+                        className={`bracket-team ${picks[game.id] === 1 ? 'bracket-team--picked' : ''}${!canPick ? ' bracket-team--tbd' : ''}`}
+                        title={canPick ? `Pick ${team2Label}` : undefined}
+                      >
+                        {isRound1 && game.team2.seed > 0 && (
+                          <span className="bracket-team__seed">{game.team2.seed}</span>
+                        )}
+                        <span className="bracket-team__label">{team2Label}</span>
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            </section>
+          ))}
+        </div>
+      )}
+
+      {activeTab === 'Final Four' && (
+        <section className="bracket-tiebreaker card">
+          <h2 className="bracket-round__title">Tiebreaker</h2>
+          <p className="page-subtitle" style={{ marginBottom: '0.75rem' }}>
+            Predict the combined total points in the championship game (e.g. 142).
+          </p>
+          <input
+            type="number"
+            min={80}
+            max={250}
+            placeholder="e.g. 142"
+            value={championshipTotal}
+            onChange={(e) => setChampionshipTotal(e.target.value)}
+            disabled={locked}
+            className="input"
+            style={{ maxWidth: 160 }}
+          />
+        </section>
+      )}
 
       {!locked && (
         <div className="bracket-actions">
