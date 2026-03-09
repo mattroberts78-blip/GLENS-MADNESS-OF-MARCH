@@ -12,19 +12,18 @@ export async function markPaymentVerified(formData: FormData) {
   }
 
   const id = Number(formData.get('credentialId'));
-  const action = String(formData.get('action') ?? '');
+  const verifyAction = String(formData.get('action') ?? '');
 
-  if (!Number.isFinite(id)) return;
-
-  try {
-    await sql`
-      UPDATE credentials
-      SET payment_verified_at = ${action === 'verify' ? new Date().toISOString() : null}
-      WHERE id = ${id} AND LOWER(TRIM(username)) <> 'admin'
-    `;
-  } catch (err) {
-    console.error('[markPaymentVerified]', err);
+  if (!Number.isFinite(id)) {
+    redirect('/admin');
   }
 
+  await sql`
+    UPDATE credentials
+    SET payment_verified_at = ${verifyAction === 'verify' ? new Date().toISOString() : null}
+    WHERE id = ${id} AND LOWER(TRIM(username)) <> 'admin'
+  `;
+
   revalidatePath('/admin');
+  redirect('/admin');
 }
