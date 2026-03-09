@@ -1,3 +1,9 @@
+'use client';
+
+import { useActionState, useEffect } from 'react';
+import { useFormStatus } from 'react-dom';
+import { markPaymentVerified } from '@/app/admin/actions';
+
 type Participant = {
   id: number;
   username: string;
@@ -5,9 +11,40 @@ type Participant = {
   entry_count: string;
 };
 
-export function PaymentTable({ participants }: { participants: Participant[] }) {
+function SubmitButton({ label, className }: { label: string; className: string }) {
+  const { pending } = useFormStatus();
+  return (
+    <button
+      type="submit"
+      className={className}
+      style={{ padding: '0.25rem 0.5rem', fontSize: '0.8rem' }}
+      disabled={pending}
+    >
+      {pending ? '…' : label}
+    </button>
+  );
+}
+
+export function PaymentTable({
+  participants,
+  action,
+}: {
+  participants: Participant[];
+  action: typeof markPaymentVerified;
+}) {
+  const [state, formAction] = useActionState(action, { ok: false });
+
+  useEffect(() => {
+    if (state.ok) {
+      window.location.href = '/admin';
+    }
+  }, [state]);
+
   return (
     <>
+      {state.error && (
+        <p style={{ color: 'var(--error)', fontSize: '0.9rem', marginBottom: '1rem' }}>{state.error}</p>
+      )}
       <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '1rem' }}>
         Check &quot;Payment verified&quot; when you&apos;ve confirmed they paid. Only verified
         participants count toward the overall winner.
@@ -34,27 +71,19 @@ export function PaymentTable({ participants }: { participants: Participant[] }) 
                 <td style={{ padding: '0.5rem 0.75rem', borderTop: '1px solid var(--border)' }}>{p.entry_count}</td>
                 <td style={{ padding: '0.5rem 0.75rem', borderTop: '1px solid var(--border)' }}>
                   {p.payment_verified_at ? (
-                    <>
+                    <form action={formAction} style={{ display: 'inline' }}>
+                      <input type="hidden" name="credentialId" value={p.id} />
+                      <input type="hidden" name="action" value="unverify" />
                       <span style={{ color: 'var(--success)', marginRight: '0.5rem' }}>Yes</span>
-                      <form action="/api/admin/set-payment-verified" method="POST" style={{ display: 'inline' }}>
-                        <input type="hidden" name="credentialId" value={p.id} />
-                        <input type="hidden" name="action" value="unverify" />
-                        <button type="submit" className="btn btn-secondary" style={{ padding: '0.25rem 0.5rem', fontSize: '0.8rem' }}>
-                          Unmark
-                        </button>
-                      </form>
-                    </>
+                      <SubmitButton label="Unmark" className="btn btn-secondary" />
+                    </form>
                   ) : (
-                    <>
+                    <form action={formAction} style={{ display: 'inline' }}>
+                      <input type="hidden" name="credentialId" value={p.id} />
+                      <input type="hidden" name="action" value="verify" />
                       <span style={{ color: 'var(--text-muted)', marginRight: '0.5rem' }}>No</span>
-                      <form action="/api/admin/set-payment-verified" method="POST" style={{ display: 'inline' }}>
-                        <input type="hidden" name="credentialId" value={p.id} />
-                        <input type="hidden" name="action" value="verify" />
-                        <button type="submit" className="btn btn-primary" style={{ padding: '0.25rem 0.5rem', fontSize: '0.8rem' }}>
-                          Mark paid
-                        </button>
-                      </form>
-                    </>
+                      <SubmitButton label="Mark paid" className="btn btn-primary" />
+                    </form>
                   )}
                 </td>
               </tr>

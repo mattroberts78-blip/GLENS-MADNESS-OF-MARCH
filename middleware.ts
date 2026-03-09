@@ -4,11 +4,8 @@ import { SESSION_COOKIE_NAME, decodeSession } from '@/lib/auth/session';
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Protect admin UI and admin API (form POST for "mark paid" hits the API)
-  const isAdminPath = pathname.startsWith('/admin');
-  const isAdminApi = pathname.startsWith('/api/admin');
-
-  if (isAdminPath || isAdminApi) {
+  // Protect admin UI only. "Mark paid" uses a Server Action (same server context as page).
+  if (pathname.startsWith('/admin')) {
     const raw = request.cookies.get(SESSION_COOKIE_NAME)?.value;
     const session = decodeSession(raw);
     if (!session || !session.isAdmin) {
@@ -23,5 +20,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/admin/:path*', '/api/admin/:path*'],
+  matcher: ['/admin/:path*'],
 };
