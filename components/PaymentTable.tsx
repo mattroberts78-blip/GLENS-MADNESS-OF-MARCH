@@ -1,3 +1,8 @@
+'use client';
+
+import { useRouter } from 'next/navigation';
+import { useEffect, useRef } from 'react';
+
 type Participant = {
   id: number;
   username: string;
@@ -12,8 +17,27 @@ export function PaymentTable({
   participants: Participant[];
   adminToken: string;
 }) {
+  const router = useRouter();
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+
+  useEffect(() => {
+    function onMessage(e: MessageEvent) {
+      if (e.data === 'payment-updated' || e.data === 'auth-error') {
+        router.refresh();
+      }
+    }
+    window.addEventListener('message', onMessage);
+    return () => window.removeEventListener('message', onMessage);
+  }, [router]);
+
   return (
     <>
+      <iframe
+        ref={iframeRef}
+        name="payment-frame"
+        style={{ display: 'none' }}
+        title="payment-frame"
+      />
       <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '1rem' }}>
         Check &quot;Payment verified&quot; when you&apos;ve confirmed they paid. Only verified
         participants count toward the overall winner.
@@ -42,7 +66,7 @@ export function PaymentTable({
                   {p.payment_verified_at ? (
                     <>
                       <span style={{ color: 'var(--success)', marginRight: '0.5rem' }}>Yes</span>
-                      <form action="/api/verify-payment" method="POST" style={{ display: 'inline' }}>
+                      <form action="/api/verify-payment" method="POST" target="payment-frame" style={{ display: 'inline' }}>
                         <input type="hidden" name="_token" value={adminToken} />
                         <input type="hidden" name="credentialId" value={p.id} />
                         <input type="hidden" name="action" value="unverify" />
@@ -54,7 +78,7 @@ export function PaymentTable({
                   ) : (
                     <>
                       <span style={{ color: 'var(--text-muted)', marginRight: '0.5rem' }}>No</span>
-                      <form action="/api/verify-payment" method="POST" style={{ display: 'inline' }}>
+                      <form action="/api/verify-payment" method="POST" target="payment-frame" style={{ display: 'inline' }}>
                         <input type="hidden" name="_token" value={adminToken} />
                         <input type="hidden" name="credentialId" value={p.id} />
                         <input type="hidden" name="action" value="verify" />
