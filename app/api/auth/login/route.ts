@@ -46,14 +46,11 @@ export async function POST(request: NextRequest) {
       redirectUrl.searchParams.set('t', signAdminToken());
     }
 
-    // Use 200 + Set-Cookie + meta refresh instead of 302 so the cookie is stored
-    // before the next navigation (avoids browser "cookie too late" on 302-after-POST).
+    const res = NextResponse.redirect(redirectUrl, { status: 302 });
+
+    // Set the session cookie on the redirect response so the browser has it
+    // before loading the destination page.
     const cookie = sessionCookieForResponse(session);
-    const html = `<!DOCTYPE html><html><head><meta http-equiv="refresh" content="0;url=${redirectUrl.toString().replace(/&/g, '&amp;')}"></head><body>Redirecting…</body></html>`;
-    const res = new NextResponse(html, {
-      status: 200,
-      headers: { 'Content-Type': 'text/html; charset=utf-8' },
-    });
     res.cookies.set(cookie.name, cookie.value, cookie.options);
     return res;
   } catch (err: unknown) {

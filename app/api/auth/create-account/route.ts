@@ -39,17 +39,14 @@ export async function POST(request: NextRequest) {
     }
 
     const redirectUrl = new URL('/', request.url);
-    // Use 200 + Set-Cookie + meta refresh instead of 302. Some browsers apply
-    // Set-Cookie "too late" on 302-after-POST, so the next GET can miss the cookie.
+    const res = NextResponse.redirect(redirectUrl, { status: 302 });
+
+    // Set the session cookie on the redirect response so the browser has it
+    // before loading the home page.
     const cookie = sessionCookieForResponse({
       credentialId,
       username: email,
       isAdmin: false,
-    });
-    const html = `<!DOCTYPE html><html><head><meta http-equiv="refresh" content="0;url=${redirectUrl.toString().replace(/&/g, '&amp;')}"></head><body>Redirecting…</body></html>`;
-    const res = new NextResponse(html, {
-      status: 200,
-      headers: { 'Content-Type': 'text/html; charset=utf-8' },
     });
     res.cookies.set(cookie.name, cookie.value, cookie.options);
     return res;
