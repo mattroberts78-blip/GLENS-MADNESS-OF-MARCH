@@ -15,12 +15,20 @@ export async function Header() {
       <nav className="site-nav">
         {session?.isAdmin ? (
           <>
-            <Link href="/logout" className="nav-link">Log out</Link>
+            <form action="/logout" method="POST" style={{ display: 'inline' }}>
+              <button type="submit" className="nav-link" style={{ background: 'none', border: 'none', padding: 0 }}>
+                Log out
+              </button>
+            </form>
             <Link href="/admin" className="nav-link">Admin</Link>
           </>
         ) : session ? (
           <>
-            <Link href="/logout" className="nav-link">Log out</Link>
+            <form action="/logout" method="POST" style={{ display: 'inline' }}>
+              <button type="submit" className="nav-link" style={{ background: 'none', border: 'none', padding: 0 }}>
+                Log out
+              </button>
+            </form>
             <Link href="/" className="nav-link">My brackets</Link>
             <Link href="/scoreboard" className="nav-link">Scoreboard</Link>
           </>
