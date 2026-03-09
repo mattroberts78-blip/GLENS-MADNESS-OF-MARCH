@@ -37,7 +37,7 @@ export function PaymentTable({
 
   useEffect(() => {
     if (safeState.ok) {
-      window.location.href = '/admin';
+      window.location.href = '/admin?r=' + Date.now();
     }
   }, [safeState]);
 
