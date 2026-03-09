@@ -1,12 +1,14 @@
 import { sql } from '@vercel/postgres';
 import { getSession } from '@/lib/auth/session';
 import { PaymentTable } from '@/components/PaymentTable';
+import { signAdminToken } from '@/lib/auth/admin-token';
 
 export const dynamic = 'force-dynamic';
 
 export default async function AdminPage() {
   const session = await getSession();
   const username = session?.username ?? 'admin';
+  const adminToken = signAdminToken();
 
   let participants: {
     id: number;
@@ -45,7 +47,7 @@ export default async function AdminPage() {
             Database error: {dbError}
           </p>
         ) : (
-          <PaymentTable participants={participants} />
+          <PaymentTable participants={participants} adminToken={adminToken} />
         )}
       </section>
     </main>

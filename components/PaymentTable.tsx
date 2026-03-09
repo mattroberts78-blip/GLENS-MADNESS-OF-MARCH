@@ -5,7 +5,13 @@ type Participant = {
   entry_count: string;
 };
 
-export function PaymentTable({ participants }: { participants: Participant[] }) {
+export function PaymentTable({
+  participants,
+  adminToken,
+}: {
+  participants: Participant[];
+  adminToken: string;
+}) {
   return (
     <>
       <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '1rem' }}>
@@ -37,6 +43,7 @@ export function PaymentTable({ participants }: { participants: Participant[] }) 
                     <>
                       <span style={{ color: 'var(--success)', marginRight: '0.5rem' }}>Yes</span>
                       <form action="/api/verify-payment" method="POST" style={{ display: 'inline' }}>
+                        <input type="hidden" name="_token" value={adminToken} />
                         <input type="hidden" name="credentialId" value={p.id} />
                         <input type="hidden" name="action" value="unverify" />
                         <button type="submit" className="btn btn-secondary" style={{ padding: '0.25rem 0.5rem', fontSize: '0.8rem' }}>
@@ -48,6 +55,7 @@ export function PaymentTable({ participants }: { participants: Participant[] }) 
                     <>
                       <span style={{ color: 'var(--text-muted)', marginRight: '0.5rem' }}>No</span>
                       <form action="/api/verify-payment" method="POST" style={{ display: 'inline' }}>
+                        <input type="hidden" name="_token" value={adminToken} />
                         <input type="hidden" name="credentialId" value={p.id} />
                         <input type="hidden" name="action" value="verify" />
                         <button type="submit" className="btn btn-primary" style={{ padding: '0.25rem 0.5rem', fontSize: '0.8rem' }}>
