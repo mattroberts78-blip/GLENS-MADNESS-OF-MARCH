@@ -33,17 +33,18 @@ export function PaymentTable({
   action: typeof markPaymentVerified;
 }) {
   const [state, formAction] = useFormState(action, { ok: false });
+  const safeState = state ?? { ok: false };
 
   useEffect(() => {
-    if (state.ok) {
+    if (safeState.ok) {
       window.location.href = '/admin';
     }
-  }, [state]);
+  }, [safeState]);
 
   return (
     <>
-      {state.error && (
-        <p style={{ color: 'var(--error)', fontSize: '0.9rem', marginBottom: '1rem' }}>{state.error}</p>
+      {safeState.error && (
+        <p style={{ color: 'var(--error)', fontSize: '0.9rem', marginBottom: '1rem' }}>{safeState.error}</p>
       )}
       <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '1rem' }}>
         Check &quot;Payment verified&quot; when you&apos;ve confirmed they paid. Only verified
