@@ -34,14 +34,14 @@ export default async function HomePage() {
           ) : (
             entries.map((entry) => (
               <li key={entry.id}>
-                <Link href={`/brackets/${entry.id}`} className="bracket-card" prefetch={false}>
+                <a href={`/brackets/${entry.id}`} className="bracket-card">
                   <strong>{entry.name}</strong>
                   {entry.locked_at ? (
                     <span className="badge badge-locked">Locked</span>
                   ) : (
                     <span className="badge badge-open">Fill out</span>
                   )}
-                </Link>
+                </a>
               </li>
             ))
           )}
