@@ -286,8 +286,34 @@ a:hover {
 
 /* Bracket entry page */
 .bracket-entry {
+  position: relative;
   padding-bottom: 2rem;
   min-height: 360px;
+  overflow: hidden;
+}
+
+.bracket-entry::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url('/glensmadness.png');
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: 520px auto;
+  opacity: 0.18;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.bracket-entry > * {
+  position: relative;
+  z-index: 1;
+}
+
+.bracket-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
 }
 
 .bracket-progress {
@@ -329,9 +355,9 @@ a:hover {
 }
 
 .bracket-round__games {
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: 0.75rem;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
 }
 
 .bracket-game {
@@ -339,6 +365,7 @@ a:hover {
   align-items: center;
   gap: 0.5rem;
   flex-wrap: wrap;
+  position: relative;
 }
 
 .bracket-game__vs {
@@ -413,6 +440,49 @@ a:hover {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+@media (max-width: 899px) {
+  /* Mobile: keep rounds stacked vertically and make cards a bit tighter */
+  .bracket-round.card {
+    margin-bottom: 1rem;
+  }
+}
+
+@media (min-width: 900px) {
+  .bracket-entry {
+    padding-bottom: 2.5rem;
+  }
+
+  .bracket-layout {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(180px, 1fr));
+    gap: 1rem;
+    align-items: flex-start;
+  }
+
+  .bracket-layout .bracket-round.card {
+    margin-bottom: 0;
+  }
+
+  .bracket-game::after {
+    content: '';
+    position: absolute;
+    right: -0.5rem;
+    top: 50%;
+    width: 0.75rem;
+    border-top: 1px solid var(--border);
+    opacity: 0.6;
+    pointer-events: none;
+  }
+
+  .bracket-round--championship {
+    box-shadow: 0 0 0 2px var(--accent-soft);
+  }
+
+  .bracket-round--championship .bracket-round__title {
+    text-align: center;
+  }
 }
 
 .bracket-tiebreaker {

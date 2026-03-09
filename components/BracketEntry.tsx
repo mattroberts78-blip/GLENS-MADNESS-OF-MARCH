@@ -95,54 +95,56 @@ export function BracketEntry({
         </p>
       </div>
 
-      {([1, 2, 3, 4, 5, 6] as const).map((round) => (
-        <section
-          key={round}
-          className={`bracket-round card ${round === 6 ? 'bracket-round--championship' : ''}`}
-        >
-          <h2 className="bracket-round__title">{ROUND_LABELS[round]}</h2>
-          <div className="bracket-round__games">
-            {gamesByRound[round]?.map((game) => {
-              const isRound1 = round === 1;
-              const derived = !isRound1 ? getDerivedTeams(round, game.slot) : null;
-              const team1Label = isRound1 ? game.team1.label : (derived?.team1 ?? '');
-              const team2Label = isRound1 ? game.team2.label : (derived?.team2 ?? '');
-              const canPick = isRound1 || (derived?.ready ?? false);
-              const gameDisabled = locked || !canPick;
+      <div className="bracket-layout">
+        {([1, 2, 3, 4, 5, 6] as const).map((round) => (
+          <section
+            key={round}
+            className={`bracket-round card ${round === 6 ? 'bracket-round--championship' : ''}`}
+          >
+            <h2 className="bracket-round__title">{ROUND_LABELS[round]}</h2>
+            <div className="bracket-round__games">
+              {gamesByRound[round]?.map((game) => {
+                const isRound1 = round === 1;
+                const derived = !isRound1 ? getDerivedTeams(round, game.slot) : null;
+                const team1Label = isRound1 ? game.team1.label : (derived?.team1 ?? '');
+                const team2Label = isRound1 ? game.team2.label : (derived?.team2 ?? '');
+                const canPick = isRound1 || (derived?.ready ?? false);
+                const gameDisabled = locked || !canPick;
 
-              return (
-                <div key={game.id} className="bracket-game">
-                  <button
-                    type="button"
-                    onClick={() => pick(game.id, 0)}
-                    disabled={gameDisabled}
-                    className={`bracket-team ${picks[game.id] === 0 ? 'bracket-team--picked' : ''}${!canPick ? ' bracket-team--tbd' : ''}`}
-                    title={canPick ? `Pick ${team1Label}` : undefined}
-                  >
-                    {isRound1 && game.team1.seed > 0 && (
-                      <span className="bracket-team__seed">{game.team1.seed}</span>
-                    )}
-                    <span className="bracket-team__label">{team1Label}</span>
-                  </button>
-                  <span className="bracket-game__vs">vs</span>
-                  <button
-                    type="button"
-                    onClick={() => pick(game.id, 1)}
-                    disabled={gameDisabled}
-                    className={`bracket-team ${picks[game.id] === 1 ? 'bracket-team--picked' : ''}${!canPick ? ' bracket-team--tbd' : ''}`}
-                    title={canPick ? `Pick ${team2Label}` : undefined}
-                  >
-                    {isRound1 && game.team2.seed > 0 && (
-                      <span className="bracket-team__seed">{game.team2.seed}</span>
-                    )}
-                    <span className="bracket-team__label">{team2Label}</span>
-                  </button>
-                </div>
-              );
-            })}
-          </div>
-        </section>
-      ))}
+                return (
+                  <div key={game.id} className="bracket-game">
+                    <button
+                      type="button"
+                      onClick={() => pick(game.id, 0)}
+                      disabled={gameDisabled}
+                      className={`bracket-team ${picks[game.id] === 0 ? 'bracket-team--picked' : ''}${!canPick ? ' bracket-team--tbd' : ''}`}
+                      title={canPick ? `Pick ${team1Label}` : undefined}
+                    >
+                      {isRound1 && game.team1.seed > 0 && (
+                        <span className="bracket-team__seed">{game.team1.seed}</span>
+                      )}
+                      <span className="bracket-team__label">{team1Label}</span>
+                    </button>
+                    <span className="bracket-game__vs">vs</span>
+                    <button
+                      type="button"
+                      onClick={() => pick(game.id, 1)}
+                      disabled={gameDisabled}
+                      className={`bracket-team ${picks[game.id] === 1 ? 'bracket-team--picked' : ''}${!canPick ? ' bracket-team--tbd' : ''}`}
+                      title={canPick ? `Pick ${team2Label}` : undefined}
+                    >
+                      {isRound1 && game.team2.seed > 0 && (
+                        <span className="bracket-team__seed">{game.team2.seed}</span>
+                      )}
+                      <span className="bracket-team__label">{team2Label}</span>
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+        ))}
+      </div>
 
       <section className="bracket-tiebreaker card">
         <h2 className="bracket-round__title">Tiebreaker</h2>
