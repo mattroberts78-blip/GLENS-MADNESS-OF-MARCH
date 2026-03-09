@@ -12,7 +12,23 @@ export default async function BracketPage({
   params: Promise<{ id: string }>;
 }) {
   const session = await getSession();
-  if (!session || session.isAdmin) redirect('/login');
+  if (!session || session.isAdmin) {
+    // Temporary debug view so we can see what the server thinks the auth state is.
+    return (
+      <main className="page-container" style={{ maxWidth: 900 }}>
+        <p style={{ marginBottom: '1rem' }}>
+          <Link href="/" className="nav-link">← Back to your brackets</Link>
+        </p>
+        <h1 className="page-title">Bracket access problem</h1>
+        <p className="page-subtitle">
+          The server thinks you are not logged in or are an admin user, so it&apos;s blocking this bracket page.
+        </p>
+        <p style={{ marginTop: '1rem', fontSize: '0.9rem', color: 'var(--text-muted)' }}>
+          Debug info: session is {session ? 'present (isAdmin = ' + String(session.isAdmin) + ')' : 'null'}.
+        </p>
+      </main>
+    );
+  }
 
   const { id } = await params;
   const entryId = parseInt(id, 10);
