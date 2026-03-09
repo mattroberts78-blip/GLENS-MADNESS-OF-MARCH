@@ -39,17 +39,22 @@ function decode(value: string): Session | null {
   }
 }
 
-/** Read session from Next.js cookies() helper (server components / server actions).
- * Prefers x-session-value header set by middleware (Vercel serverless can miss cookies());
- * falls back to cookies() for API routes and when middleware did not run. */
+/** Read session for Server Components / server actions.
+ * Primary source is the x-session-json header populated by middleware, which has
+ * already parsed and validated the cookie. Falls back to cookies() only if the
+ * header is missing (e.g. in non-routed contexts). */
 export async function getSession(): Promise<Session | null> {
   try {
     const headersList = headers();
-    const fromHeader = headersList.get('x-session-value');
+    const fromHeader = headersList.get('x-session-json');
     if (fromHeader) {
-      const session = decode(fromHeader);
-      if (session) return session;
+      try {
+        return JSON.parse(fromHeader) as Session;
+      } catch {
+        // Ignore malformed header and fall back to cookies().
+      }
     }
+
     const cookieStore = await cookies();
     const cookie = cookieStore.get(SESSION_COOKIE);
     if (!cookie) return null;
