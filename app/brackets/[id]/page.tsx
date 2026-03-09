@@ -1,7 +1,8 @@
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { sql } from '@vercel/postgres';
-import { getSession } from '@/lib/auth/session';
+import { cookies, headers } from 'next/headers';
+import { getSession, decodeSession, SESSION_COOKIE_NAME } from '@/lib/auth/session';
 import { BracketEntry } from '@/components/BracketEntry';
 
 export const dynamic = 'force-dynamic';
@@ -13,6 +14,13 @@ export default async function BracketPage({
 }) {
   const session = await getSession();
   if (!session || session.isAdmin) {
+    // Debug: inspect what the server actually sees on this request.
+    const headerStore = headers();
+    const cookieHeader = headerStore.get('cookie') || '(none)';
+    const cookieStore = cookies();
+    const rawCookie = cookieStore.get(SESSION_COOKIE_NAME)?.value || '(none)';
+    const decoded = rawCookie && rawCookie !== '(none)' ? decodeSession(rawCookie) : null;
+
     // Temporary debug view so we can see what the server thinks the auth state is.
     return (
       <main className="page-container" style={{ maxWidth: 900 }}>
@@ -25,6 +33,15 @@ export default async function BracketPage({
         </p>
         <p style={{ marginTop: '1rem', fontSize: '0.9rem', color: 'var(--text-muted)' }}>
           Debug info: session is {session ? 'present (isAdmin = ' + String(session.isAdmin) + ')' : 'null'}.
+        </p>
+        <p style={{ marginTop: '0.5rem', fontSize: '0.8rem', color: 'var(--text-muted)', wordBreak: 'break-all' }}>
+          Cookie header: {cookieHeader}
+        </p>
+        <p style={{ marginTop: '0.25rem', fontSize: '0.8rem', color: 'var(--text-muted)', wordBreak: 'break-all' }}>
+          gm_session raw: {rawCookie}
+        </p>
+        <p style={{ marginTop: '0.25rem', fontSize: '0.8rem', color: 'var(--text-muted)', wordBreak: 'break-all' }}>
+          gm_session decoded: {decoded ? JSON.stringify(decoded) : 'null'}
         </p>
       </main>
     );
