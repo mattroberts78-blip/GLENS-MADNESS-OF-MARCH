@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 
 type Participant = {
   id: number;
@@ -17,23 +17,13 @@ export function PaymentTable({
   adminToken: string;
 }) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
-  // #region agent log
-  const [dbgStatus, setDbgStatus] = useState('idle');
-  // #endregion
 
   useEffect(() => {
     function onMessage(e: MessageEvent) {
       if (e.data === 'payment-updated') {
-        // #region agent log
-        setDbgStatus('payment-updated, reloading...');
-        // #endregion
         const url = new URL(window.location.href);
         url.searchParams.set('t', adminToken);
         window.location.href = url.toString();
-      } else if (e.data === 'auth-error') {
-        // #region agent log
-        setDbgStatus('auth-error');
-        // #endregion
       }
     }
     window.addEventListener('message', onMessage);
@@ -48,11 +38,6 @@ export function PaymentTable({
         style={{ display: 'none' }}
         title="payment-frame"
       />
-      {/* #region agent log */}
-      <p style={{ color: '#888', fontSize: '0.75rem', marginBottom: '0.5rem' }}>
-        [debug] status: {dbgStatus} | build: 20260308c
-      </p>
-      {/* #endregion */}
       <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '1rem' }}>
         Check &quot;Payment verified&quot; when you&apos;ve confirmed they paid. Only verified
         participants count toward the overall winner.
