@@ -1,4 +1,4 @@
-import { cookies } from 'next/headers';
+import { cookies, headers } from 'next/headers';
 
 const SESSION_COOKIE = 'gm_session';
 
@@ -39,9 +39,17 @@ function decode(value: string): Session | null {
   }
 }
 
-/** Read session from Next.js cookies() helper (server components / server actions). */
+/** Read session from Next.js cookies() helper (server components / server actions).
+ * Prefers x-session-value header set by middleware (Vercel serverless can miss cookies());
+ * falls back to cookies() for API routes and when middleware did not run. */
 export async function getSession(): Promise<Session | null> {
   try {
+    const headersList = headers();
+    const fromHeader = headersList.get('x-session-value');
+    if (fromHeader) {
+      const session = decode(fromHeader);
+      if (session) return session;
+    }
     const cookieStore = await cookies();
     const cookie = cookieStore.get(SESSION_COOKIE);
     if (!cookie) return null;

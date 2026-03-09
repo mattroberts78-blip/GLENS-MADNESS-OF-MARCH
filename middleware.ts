@@ -1,9 +1,18 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
-export function middleware() {
-  return NextResponse.next();
+const SESSION_COOKIE = 'gm_session';
+
+export function middleware(request: NextRequest) {
+  const requestHeaders = new Headers(request.headers);
+  const cookieValue = request.cookies.get(SESSION_COOKIE)?.value;
+  if (cookieValue) {
+    requestHeaders.set('x-session-value', cookieValue);
+  }
+  return NextResponse.next({
+    request: { headers: requestHeaders },
+  });
 }
 
 export const config = {
-  matcher: [],
+  matcher: ['/((?!_next/static|_next/image|favicon.ico|api).*)'],
 };
