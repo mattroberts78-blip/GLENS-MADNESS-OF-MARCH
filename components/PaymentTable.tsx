@@ -28,9 +28,13 @@ export function PaymentTable({
     formData.set('action', action);
     const result = await markPaymentVerified({ ok: false }, formData);
     setBusyId(null);
-    if (result?.error) {
-      setError(result.error);
+    const parts: string[] = [];
+    if (result?.debug) parts.push(`[DEBUG] ${result.debug}`);
+    if (result?.error) parts.push(result.error);
+    if (parts.length) {
+      setError(parts.join(' | '));
     } else if (result?.ok) {
+      setError('[DEBUG] OK — refreshing...');
       router.refresh();
     }
   }
