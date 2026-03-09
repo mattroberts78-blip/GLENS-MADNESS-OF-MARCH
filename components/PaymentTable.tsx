@@ -21,21 +21,26 @@ export function PaymentTable({
   const [error, setError] = useState<string | null>(null);
 
   async function handleClick(p: Participant, action: 'verify' | 'unverify') {
+    alert(`handleClick fired: id=${p.id} action=${action}`);
     setError(null);
     setBusyId(p.id);
-    const formData = new FormData();
-    formData.set('credentialId', String(p.id));
-    formData.set('action', action);
-    const result = await markPaymentVerified({ ok: false }, formData);
-    setBusyId(null);
-    const parts: string[] = [];
-    if (result?.debug) parts.push(`[DEBUG] ${result.debug}`);
-    if (result?.error) parts.push(result.error);
-    if (parts.length) {
-      setError(parts.join(' | '));
-    } else if (result?.ok) {
-      setError('[DEBUG] OK — refreshing...');
-      router.refresh();
+    try {
+      const formData = new FormData();
+      formData.set('credentialId', String(p.id));
+      formData.set('action', action);
+      const result = await markPaymentVerified({ ok: false }, formData);
+      setBusyId(null);
+      alert(`Action result: ${JSON.stringify(result)}`);
+      if (result?.ok) {
+        router.refresh();
+      } else if (result?.error) {
+        setError(result.error + (result.debug ? ` | ${result.debug}` : ''));
+      }
+    } catch (err: unknown) {
+      setBusyId(null);
+      const msg = err instanceof Error ? err.message : String(err);
+      alert(`Action THREW: ${msg}`);
+      setError(msg);
     }
   }
 
