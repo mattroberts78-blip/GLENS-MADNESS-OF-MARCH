@@ -23,11 +23,15 @@ export async function markPaymentVerified(
   }
 
   try {
-    await sql`
+    const result = await sql`
       UPDATE credentials
       SET payment_verified_at = ${verifyAction === 'verify' ? new Date().toISOString() : null}
       WHERE id = ${id} AND LOWER(TRIM(username)) <> 'admin'
     `;
+    const rowCount = result.rowCount ?? 0;
+    if (rowCount === 0) {
+      return { ok: false, error: `Update affected 0 rows (credentialId=${id}). Check participant id.` };
+    }
     revalidatePath('/admin');
     return { ok: true };
   } catch (err) {
