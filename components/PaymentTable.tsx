@@ -37,20 +37,26 @@ export function PaymentTable({
 
   // Update list from action result so we don't rely on reload/cache
   const [list, setList] = useState(participants);
+  const [justUpdated, setJustUpdated] = useState(false);
   useEffect(() => {
     if (safeState.ok && safeState.updatedId != null) {
+      const id = Number(safeState.updatedId);
       setList((prev) =>
         prev.map((p) =>
-          p.id === safeState.updatedId
-            ? { ...p, payment_verified_at: new Date().toISOString() }
-            : p,
+          p.id === id ? { ...p, payment_verified_at: new Date().toISOString() } : p,
         ),
       );
+      setJustUpdated(true);
+      const t = setTimeout(() => setJustUpdated(false), 2000);
+      return () => clearTimeout(t);
     }
   }, [safeState.ok, safeState.updatedId]);
 
   return (
     <>
+      {justUpdated && (
+        <p style={{ color: 'var(--success)', fontSize: '0.9rem', marginBottom: '1rem' }}>Payment verified ✓</p>
+      )}
       {safeState.error && (
         <p style={{ color: 'var(--error)', fontSize: '0.9rem', marginBottom: '1rem' }}>{safeState.error}</p>
       )}
