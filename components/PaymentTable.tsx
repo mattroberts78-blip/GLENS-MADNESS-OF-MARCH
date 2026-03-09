@@ -1,7 +1,6 @@
 'use client';
 
-import { useRouter } from 'next/navigation';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 type Participant = {
   id: number;
@@ -17,18 +16,27 @@ export function PaymentTable({
   participants: Participant[];
   adminToken: string;
 }) {
-  const router = useRouter();
   const iframeRef = useRef<HTMLIFrameElement>(null);
+  // #region agent log
+  const [dbgStatus, setDbgStatus] = useState('idle');
+  // #endregion
 
   useEffect(() => {
     function onMessage(e: MessageEvent) {
-      if (e.data === 'payment-updated' || e.data === 'auth-error') {
-        router.refresh();
+      if (e.data === 'payment-updated') {
+        // #region agent log
+        setDbgStatus('msg-received:payment-updated, reloading...');
+        // #endregion
+        window.location.reload();
+      } else if (e.data === 'auth-error') {
+        // #region agent log
+        setDbgStatus('msg-received:auth-error');
+        // #endregion
       }
     }
     window.addEventListener('message', onMessage);
     return () => window.removeEventListener('message', onMessage);
-  }, [router]);
+  }, []);
 
   return (
     <>
@@ -38,6 +46,11 @@ export function PaymentTable({
         style={{ display: 'none' }}
         title="payment-frame"
       />
+      {/* #region agent log */}
+      <p style={{ color: '#888', fontSize: '0.75rem', marginBottom: '0.5rem' }}>
+        [debug] iframe-status: {dbgStatus} | build: 20260308b
+      </p>
+      {/* #endregion */}
       <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '1rem' }}>
         Check &quot;Payment verified&quot; when you&apos;ve confirmed they paid. Only verified
         participants count toward the overall winner.
