@@ -1,7 +1,6 @@
 import { sql } from '@vercel/postgres';
 import { getSession } from '@/lib/auth/session';
 import { PaymentTable } from '@/components/PaymentTable';
-import { markPaymentVerified } from '@/app/admin/actions';
 
 export const dynamic = 'force-dynamic';
 
@@ -46,7 +45,7 @@ export default async function AdminPage() {
             Database error: {dbError}
           </p>
         ) : (
-          <PaymentTable participants={participants} action={markPaymentVerified} />
+          <PaymentTable participants={participants} />
         )}
       </section>
     </main>
