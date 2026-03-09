@@ -4,12 +4,12 @@ import { sql } from '@vercel/postgres';
 import { getSession } from '@/lib/auth/session';
 import { revalidatePath } from 'next/cache';
 
-export type MarkPaymentState = { ok: boolean; error?: string; debug?: string };
+export type MarkPaymentResult = { ok: boolean; error?: string; debug?: string };
 
 export async function markPaymentVerified(
-  _prev: MarkPaymentState,
-  formData: FormData,
-): Promise<MarkPaymentState> {
+  credentialId: number,
+  action: 'verify' | 'unverify',
+): Promise<MarkPaymentResult> {
   const debugParts: string[] = [];
 
   try {
@@ -20,26 +20,24 @@ export async function markPaymentVerified(
       return { ok: false, error: 'Session expired.', debug: debugParts.join(' | ') };
     }
 
-    const id = Number(formData.get('credentialId'));
-    const verifyAction = String(formData.get('action') ?? '');
-    debugParts.push(`id=${id}, action=${verifyAction}`);
+    debugParts.push(`id=${credentialId}, action=${action}`);
 
-    if (!Number.isFinite(id)) {
+    if (!Number.isFinite(credentialId)) {
       return { ok: false, error: 'Invalid id.', debug: debugParts.join(' | ') };
     }
 
-    const ts = verifyAction === 'verify' ? new Date().toISOString() : null;
+    const ts = action === 'verify' ? new Date().toISOString() : null;
     debugParts.push(`setting payment_verified_at=${ts}`);
 
     const result = await sql`
       UPDATE credentials
       SET payment_verified_at = ${ts}
-      WHERE id = ${id} AND LOWER(TRIM(username)) <> 'admin'
+      WHERE id = ${credentialId} AND LOWER(TRIM(username)) <> 'admin'
     `;
     debugParts.push(`rowCount=${result.rowCount}`);
 
-    const check = await sql`SELECT id, payment_verified_at FROM credentials WHERE id = ${id}`;
-    debugParts.push(`after_update=${JSON.stringify(check.rows[0])}`);
+    const check = await sql`SELECT id, payment_verified_at FROM credentials WHERE id = ${credentialId}`;
+    debugParts.push(`after=${JSON.stringify(check.rows[0])}`);
 
     revalidatePath('/admin');
     return { ok: true, debug: debugParts.join(' | ') };

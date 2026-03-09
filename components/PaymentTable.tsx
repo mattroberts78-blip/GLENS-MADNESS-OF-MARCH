@@ -25,10 +25,7 @@ export function PaymentTable({
     setError(null);
     setBusyId(p.id);
     try {
-      const formData = new FormData();
-      formData.set('credentialId', String(p.id));
-      formData.set('action', action);
-      const result = await markPaymentVerified({ ok: false }, formData);
+      const result = await markPaymentVerified(p.id, action);
       setBusyId(null);
       alert(`Action result: ${JSON.stringify(result)}`);
       if (result?.ok) {
