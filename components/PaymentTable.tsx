@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useFormStatus } from 'react-dom';
+import type { markPaymentVerified } from '@/app/admin/actions';
 
 type Participant = {
   id: number;
@@ -9,38 +10,32 @@ type Participant = {
   entry_count: string;
 };
 
-function fireConfetti() {
-  import('canvas-confetti').then(({ default: confetti }) => {
-    confetti({ particleCount: 80, spread: 70, origin: { y: 0.6 } });
-  });
+function SubmitButton({ label, className }: { label: string; className: string }) {
+  const { pending } = useFormStatus();
+  return (
+    <button
+      type="submit"
+      className={className}
+      style={{ padding: '0.25rem 0.5rem', fontSize: '0.8rem' }}
+      disabled={pending}
+    >
+      {pending ? '…' : label}
+    </button>
+  );
 }
 
 export function PaymentTable({
-  participants: initial,
-  showUpdated,
-  showError,
+  participants,
+  action,
 }: {
   participants: Participant[];
-  showUpdated?: boolean;
-  showError?: string | null;
+  action: typeof markPaymentVerified;
 }) {
-  const [participants] = useState(initial);
-  const [didConfetti, setDidConfetti] = useState(false);
-
-  useEffect(() => {
-    if (showUpdated && !didConfetti) {
-      fireConfetti();
-      setDidConfetti(true);
-    }
-  }, [showUpdated, didConfetti]);
-
   return (
     <>
-      {showError && (
-        <p style={{ color: 'var(--error)', fontSize: '0.9rem', marginBottom: '1rem' }}>{showError}</p>
-      )}
       <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '1rem' }}>
-        Check &quot;Payment verified&quot; when you&apos;ve confirmed they paid. Only verified participants count toward the overall winner.
+        Check &quot;Payment verified&quot; when you&apos;ve confirmed they paid. Only verified
+        participants count toward the overall winner.
       </p>
       <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
         <thead>
@@ -64,27 +59,19 @@ export function PaymentTable({
                 <td style={{ padding: '0.5rem 0.75rem', borderTop: '1px solid var(--border)' }}>{p.entry_count}</td>
                 <td style={{ padding: '0.5rem 0.75rem', borderTop: '1px solid var(--border)' }}>
                   {p.payment_verified_at ? (
-                    <>
+                    <form action={action} style={{ display: 'inline' }}>
+                      <input type="hidden" name="credentialId" value={p.id} />
+                      <input type="hidden" name="action" value="unverify" />
                       <span style={{ color: 'var(--success)', marginRight: '0.5rem' }}>Yes</span>
-                      <form action="/api/admin/set-payment-verified" method="POST" style={{ display: 'inline' }}>
-                        <input type="hidden" name="credentialId" value={p.id} />
-                        <input type="hidden" name="action" value="unverify" />
-                        <button type="submit" className="btn btn-secondary" style={{ padding: '0.25rem 0.5rem', fontSize: '0.8rem' }}>
-                          Unmark
-                        </button>
-                      </form>
-                    </>
+                      <SubmitButton label="Unmark" className="btn btn-secondary" />
+                    </form>
                   ) : (
-                    <>
+                    <form action={action} style={{ display: 'inline' }}>
+                      <input type="hidden" name="credentialId" value={p.id} />
+                      <input type="hidden" name="action" value="verify" />
                       <span style={{ color: 'var(--text-muted)', marginRight: '0.5rem' }}>No</span>
-                      <form action="/api/admin/set-payment-verified" method="POST" style={{ display: 'inline' }}>
-                        <input type="hidden" name="credentialId" value={p.id} />
-                        <input type="hidden" name="action" value="verify" />
-                        <button type="submit" className="btn btn-primary" style={{ padding: '0.25rem 0.5rem', fontSize: '0.8rem' }}>
-                          Mark paid
-                        </button>
-                      </form>
-                    </>
+                      <SubmitButton label="Mark paid" className="btn btn-primary" />
+                    </form>
                   )}
                 </td>
               </tr>

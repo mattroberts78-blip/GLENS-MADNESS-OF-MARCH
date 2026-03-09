@@ -1,25 +1,13 @@
 import { sql } from '@vercel/postgres';
 import { getSession } from '@/lib/auth/session';
 import { PaymentTable } from '@/components/PaymentTable';
+import { markPaymentVerified } from '@/app/admin/actions';
 
 export const dynamic = 'force-dynamic';
 
-export default async function AdminPage({
-  searchParams,
-}: {
-  searchParams?: { updated?: string; error?: string };
-}) {
+export default async function AdminPage() {
   const session = await getSession();
   const username = session?.username ?? 'admin';
-
-  const params = searchParams ?? {};
-  const showUpdated = params?.updated === '1';
-  const showError =
-    params?.error === '1'
-      ? 'Something went wrong. Please try again.'
-      : params?.error === 'forbidden'
-        ? "You don't have permission to do that."
-        : null;
 
   let participants: {
     id: number;
@@ -58,11 +46,7 @@ export default async function AdminPage({
             Database error: {dbError}
           </p>
         ) : (
-          <PaymentTable
-            participants={participants}
-            showUpdated={showUpdated}
-            showError={showError}
-          />
+          <PaymentTable participants={participants} action={markPaymentVerified} />
         )}
       </section>
     </main>
