@@ -7,9 +7,20 @@ export async function POST(request: NextRequest) {
   const raw = request.cookies.get(SESSION_COOKIE_NAME)?.value;
   const session = decodeSession(raw);
 
+  // Also check raw Cookie header
+  const cookieHeader = request.headers.get('cookie') ?? '(no cookie header)';
+  const allCookieNames = request.cookies.getAll().map(c => c.name);
+
   if (!session || !session.isAdmin) {
     return NextResponse.json(
-      { ok: false, error: 'Not authorized', hasCookie: !!raw, decoded: !!session },
+      {
+        ok: false,
+        error: 'Not authorized',
+        hasCookie: !!raw,
+        decoded: !!session,
+        cookieHeader: cookieHeader.substring(0, 200),
+        allCookieNames,
+      },
       { status: 401 },
     );
   }
