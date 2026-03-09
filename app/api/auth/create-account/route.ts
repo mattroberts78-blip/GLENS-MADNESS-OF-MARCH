@@ -40,6 +40,7 @@ export async function POST(request: NextRequest) {
 
     const redirectUrl = new URL('/', request.url);
     const res = NextResponse.redirect(redirectUrl, 302);
+    // Cookie must be set on this response so the browser has session on GET /
     const cookie = sessionCookieForResponse({
       credentialId,
       username: email,

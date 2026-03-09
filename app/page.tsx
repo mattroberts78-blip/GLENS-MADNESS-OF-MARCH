@@ -3,6 +3,8 @@ import { redirect } from 'next/navigation';
 import { sql } from '@vercel/postgres';
 import { getSession } from '@/lib/auth/session';
 
+export const dynamic = 'force-dynamic';
+
 export default async function HomePage() {
   const session = await getSession();
 
@@ -32,7 +34,7 @@ export default async function HomePage() {
           ) : (
             entries.map((entry) => (
               <li key={entry.id}>
-                <Link href={`/brackets/${entry.id}`} className="bracket-card">
+                <Link href={`/brackets/${entry.id}`} className="bracket-card" prefetch={false}>
                   <strong>{entry.name}</strong>
                   {entry.locked_at ? (
                     <span className="badge badge-locked">Locked</span>
@@ -45,7 +47,7 @@ export default async function HomePage() {
           )}
         </ul>
         <p style={{ marginTop: '1.5rem' }}>
-          <Link href="/scoreboard" className="nav-link nav-link-cta">View scoreboard</Link>
+          <Link href="/scoreboard" className="nav-link nav-link-cta" prefetch={false}>View scoreboard</Link>
         </p>
       </main>
     );

@@ -4,6 +4,8 @@ import { sql } from '@vercel/postgres';
 import { getSession } from '@/lib/auth/session';
 import { BracketEntry } from '@/components/BracketEntry';
 
+export const dynamic = 'force-dynamic';
+
 export default async function BracketPage({
   params,
 }: {
