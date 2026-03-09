@@ -1,7 +1,7 @@
 'use client';
 
-import { useActionState, useEffect } from 'react';
-import { useFormStatus } from 'react-dom';
+import { useEffect } from 'react';
+import { useFormState, useFormStatus } from 'react-dom';
 import { markPaymentVerified } from '@/app/admin/actions';
 
 type Participant = {
@@ -32,7 +32,7 @@ export function PaymentTable({
   participants: Participant[];
   action: typeof markPaymentVerified;
 }) {
-  const [state, formAction] = useActionState(action, { ok: false });
+  const [state, formAction] = useFormState(action, { ok: false });
 
   useEffect(() => {
     if (state.ok) {
