@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { sql } from '@vercel/postgres';
 import { sessionCookieForResponse } from '@/lib/auth/session';
+import { signAdminToken } from '@/lib/auth/admin-token';
 
 export async function POST(request: NextRequest) {
   try {
@@ -40,6 +41,11 @@ export async function POST(request: NextRequest) {
 
     const redirectPath = isAdmin ? '/admin' : '/';
     const redirectUrl = new URL(redirectPath, request.url);
+
+    if (isAdmin) {
+      redirectUrl.searchParams.set('t', signAdminToken());
+    }
+
     const res = NextResponse.redirect(redirectUrl, 302);
     const cookie = sessionCookieForResponse(session);
     res.cookies.set(cookie.name, cookie.value, cookie.options);

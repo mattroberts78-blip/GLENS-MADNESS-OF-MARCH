@@ -1,14 +1,27 @@
 import { sql } from '@vercel/postgres';
+import { redirect } from 'next/navigation';
 import { getSession } from '@/lib/auth/session';
+import { signAdminToken, verifyAdminToken } from '@/lib/auth/admin-token';
 import { PaymentTable } from '@/components/PaymentTable';
-import { signAdminToken } from '@/lib/auth/admin-token';
 
 export const dynamic = 'force-dynamic';
 
-export default async function AdminPage() {
+export default async function AdminPage({
+  searchParams,
+}: {
+  searchParams?: { t?: string };
+}) {
   const session = await getSession();
+  const urlToken = searchParams?.t ?? '';
+  const hasValidSession = session?.isAdmin === true;
+  const hasValidToken = urlToken.length > 0 && verifyAdminToken(urlToken);
+
+  if (!hasValidSession && !hasValidToken) {
+    redirect('/login?reason=session_expired');
+  }
+
   const username = session?.username ?? 'admin';
-  const adminToken = signAdminToken();
+  const adminToken = hasValidToken && urlToken.length > 0 ? urlToken : signAdminToken();
 
   let participants: {
     id: number;

@@ -25,18 +25,20 @@ export function PaymentTable({
     function onMessage(e: MessageEvent) {
       if (e.data === 'payment-updated') {
         // #region agent log
-        setDbgStatus('msg-received:payment-updated, reloading...');
+        setDbgStatus('payment-updated, reloading...');
         // #endregion
-        window.location.reload();
+        const url = new URL(window.location.href);
+        url.searchParams.set('t', adminToken);
+        window.location.href = url.toString();
       } else if (e.data === 'auth-error') {
         // #region agent log
-        setDbgStatus('msg-received:auth-error');
+        setDbgStatus('auth-error');
         // #endregion
       }
     }
     window.addEventListener('message', onMessage);
     return () => window.removeEventListener('message', onMessage);
-  }, []);
+  }, [adminToken]);
 
   return (
     <>
@@ -48,7 +50,7 @@ export function PaymentTable({
       />
       {/* #region agent log */}
       <p style={{ color: '#888', fontSize: '0.75rem', marginBottom: '0.5rem' }}>
-        [debug] iframe-status: {dbgStatus} | build: 20260308b
+        [debug] status: {dbgStatus} | build: 20260308c
       </p>
       {/* #endregion */}
       <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '1rem' }}>
