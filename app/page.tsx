@@ -10,12 +10,17 @@ export default async function HomePage() {
 
   if (session && !session.isAdmin) {
     const entriesResult = await sql`
-      SELECT id, name, locked_at
+      SELECT id, name, locked_at, picks_complete
       FROM entries
       WHERE credential_id = ${session.credentialId}
       ORDER BY id ASC
     `;
-    const entries = entriesResult.rows as { id: number; name: string; locked_at: string | null }[];
+    const entries = entriesResult.rows as {
+      id: number;
+      name: string;
+      locked_at: string | null;
+      picks_complete: boolean | null;
+    }[];
 
     return (
       <main className="page-container">
@@ -38,8 +43,10 @@ export default async function HomePage() {
                   <strong>{entry.name}</strong>
                   {entry.locked_at ? (
                     <span className="badge badge-locked">Locked</span>
+                  ) : entry.picks_complete ? (
+                    <span className="badge badge-complete">Complete</span>
                   ) : (
-                    <span className="badge badge-open">Fill out</span>
+                    <span className="badge badge-open">Not complete</span>
                   )}
                 </a>
               </li>

@@ -19,11 +19,17 @@ export default async function BracketPage({
   if (Number.isNaN(entryId)) redirect('/');
 
   const result = await sql`
-    SELECT e.id, e.name, e.locked_at, e.credential_id
+    SELECT e.id, e.name, e.locked_at, e.credential_id, e.picks_json, e.championship_total
     FROM entries e
     WHERE e.id = ${entryId} AND e.credential_id = ${session.credentialId}
   `;
-  const entry = result.rows[0] as { id: number; name: string; locked_at: string | null } | undefined;
+  const entry = result.rows[0] as {
+    id: number;
+    name: string;
+    locked_at: string | null;
+    picks_json: unknown | null;
+    championship_total: number | null;
+  } | undefined;
 
   if (!entry) {
     return (
@@ -52,6 +58,8 @@ export default async function BracketPage({
         entryId={entry.id}
         entryName={entry.name}
         locked={!!entry.locked_at}
+        initialPicks={(entry.picks_json as Record<string, 0 | 1> | null) ?? undefined}
+        initialChampionshipTotal={entry.championship_total ?? undefined}
       />
     </main>
   );

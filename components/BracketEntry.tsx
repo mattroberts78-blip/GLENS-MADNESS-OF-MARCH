@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import {
   DEMO_BRACKET_GAMES,
   ROUND_LABELS,
@@ -17,15 +17,26 @@ export function BracketEntry({
   entryName,
   entryId,
   locked,
+  initialPicks,
+  initialChampionshipTotal,
 }: {
   entryName: string;
   entryId: number;
   locked: boolean;
+  initialPicks?: Picks;
+  initialChampionshipTotal?: number;
 }) {
-  const [picks, setPicks] = useState<Picks>({});
-  const [championshipTotal, setChampionshipTotal] = useState('');
+  const [picks, setPicks] = useState<Picks>(initialPicks ?? {});
+  const [championshipTotal, setChampionshipTotal] = useState(
+    initialChampionshipTotal != null ? String(initialChampionshipTotal) : ''
+  );
   const [saved, setSaved] = useState(false);
   const [activeTab, setActiveTab] = useState<TabKey>('East');
+
+  useEffect(() => {
+    setPicks(initialPicks ?? {});
+    setChampionshipTotal(initialChampionshipTotal != null ? String(initialChampionshipTotal) : '');
+  }, [entryId, initialPicks, initialChampionshipTotal]);
 
   const gamesByRound = useMemo(() => {
     const map: Record<number, BracketGame[]> = {};
@@ -118,9 +129,129 @@ export function BracketEntry({
   const complete = pickedCount === totalGames && championshipTotal.trim() !== '';
 
   const handleSave = () => {
-    setSaved(true);
-    setTimeout(() => setSaved(false), 3000);
+    if (locked) return;
+    const body = {
+      picks,
+      championshipTotal,
+    };
+
+    fetch(`/api/entries/${entryId}/picks`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    })
+      .then(async (res) => {
+        if (!res.ok) throw new Error(`Save failed (${res.status})`);
+        return res.json();
+      })
+      .then(() => {
+        setSaved(true);
+        setTimeout(() => setSaved(false), 3000);
+      })
+      .catch(() => {
+        // Leave saved=false so button text stays \"Save bracket\" on error.
+      });
   };
+
+  const renderRegionBracket = (region: Region) => (
+    <div className="bracket-layout bracket-layout--print-region">
+      {([1, 2, 3, 4] as const).map((round) => (
+        <section key={round} className="bracket-round">
+          <h2 className="bracket-round__title">{ROUND_LABELS[round]}</h2>
+          <div className="bracket-round__games">
+            {getRegionGames(round, region).map((game) => {
+              const isRound1 = round === 1;
+              const derived = !isRound1 ? getDerivedTeams(round, game.slot) : null;
+              const team1Label = isRound1 ? game.team1.label : (derived?.team1 ?? '');
+              const team2Label = isRound1 ? game.team2.label : (derived?.team2 ?? '');
+              const canPick = isRound1 || (derived?.ready ?? false);
+              const gameDisabled = locked || !canPick;
+
+              return (
+                <div key={game.id} className="bracket-game">
+                  <button
+                    type="button"
+                    onClick={() => pick(game.id, 0)}
+                    disabled={gameDisabled}
+                    className={`bracket-team ${picks[game.id] === 0 ? 'bracket-team--picked' : ''}${
+                      !canPick ? ' bracket-team--tbd' : ''
+                    }`}
+                  >
+                    {isRound1 && game.team1.seed > 0 && (
+                      <span className="bracket-team__seed">{game.team1.seed}</span>
+                    )}
+                    <span className="bracket-team__label">{team1Label}</span>
+                  </button>
+                  <span className="bracket-game__vs">vs</span>
+                  <button
+                    type="button"
+                    onClick={() => pick(game.id, 1)}
+                    disabled={gameDisabled}
+                    className={`bracket-team ${picks[game.id] === 1 ? 'bracket-team--picked' : ''}${
+                      !canPick ? ' bracket-team--tbd' : ''
+                    }`}
+                  >
+                    {isRound1 && game.team2.seed > 0 && (
+                      <span className="bracket-team__seed">{game.team2.seed}</span>
+                    )}
+                    <span className="bracket-team__label">{team2Label}</span>
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      ))}
+    </div>
+  );
+
+  const renderFinalFourBracket = () => (
+    <div className="bracket-layout bracket-layout--print-final">
+      {([5, 6] as const).map((round) => (
+        <section
+          key={round}
+          className={`bracket-round ${round === 6 ? 'bracket-round--championship' : ''}`}
+        >
+          <h2 className="bracket-round__title">{ROUND_LABELS[round]}</h2>
+          <div className="bracket-round__games">
+            {gamesByRound[round]?.map((game) => {
+              const derived = getDerivedTeams(round, game.slot);
+              const team1Label = derived.team1;
+              const team2Label = derived.team2;
+              const canPick = derived.ready;
+              const gameDisabled = locked || !canPick;
+
+              return (
+                <div key={game.id} className="bracket-game">
+                  <button
+                    type="button"
+                    onClick={() => pick(game.id, 0)}
+                    disabled={gameDisabled}
+                    className={`bracket-team ${picks[game.id] === 0 ? 'bracket-team--picked' : ''}${
+                      !canPick ? ' bracket-team--tbd' : ''
+                    }`}
+                  >
+                    <span className="bracket-team__label">{team1Label}</span>
+                  </button>
+                  <span className="bracket-game__vs">vs</span>
+                  <button
+                    type="button"
+                    onClick={() => pick(game.id, 1)}
+                    disabled={gameDisabled}
+                    className={`bracket-team ${picks[game.id] === 1 ? 'bracket-team--picked' : ''}${
+                      !canPick ? ' bracket-team--tbd' : ''
+                    }`}
+                  >
+                    <span className="bracket-team__label">{team2Label}</span>
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+      ))}
+    </div>
+  );
 
   return (
     <div className="bracket-entry" data-bracket-mounted style={{ minHeight: 400 }}>
@@ -135,6 +266,16 @@ export function BracketEntry({
           {pickedCount} of {totalGames} games picked
           {championshipTotal.trim() && ' · Tiebreaker set'}
         </p>
+      </div>
+
+      <div className="bracket-entry__actions">
+        <button
+          type="button"
+          className="btn btn-secondary bracket-print-btn"
+          onClick={() => window.print()}
+        >
+          Print bracket
+        </button>
       </div>
 
       <div className="bracket-tabs">
@@ -287,6 +428,36 @@ export function BracketEntry({
       {locked && (
         <p className="bracket-locked-msg">This bracket is locked and can no longer be edited.</p>
       )}
+
+      {/* Print-only full bracket layout */}
+      <div className="bracket-print-board">
+        <h2 className="bracket-print-title">{entryName}</h2>
+        <div className="bracket-print-grid">
+          <div className="bracket-print-column">
+            <h3 className="bracket-print-region-label">West</h3>
+            {renderRegionBracket('West')}
+          </div>
+          <div className="bracket-print-column">
+            <h3 className="bracket-print-region-label">East</h3>
+            {renderRegionBracket('East')}
+          </div>
+          <div className="bracket-print-column">
+            <h3 className="bracket-print-region-label">South</h3>
+            {renderRegionBracket('South')}
+          </div>
+          <div className="bracket-print-column">
+            <h3 className="bracket-print-region-label">Midwest</h3>
+            {renderRegionBracket('Midwest')}
+          </div>
+          <div className="bracket-print-column bracket-print-column--center">
+            <h3 className="bracket-print-region-label">Final Four</h3>
+            {renderFinalFourBracket()}
+            <div className="bracket-print-tiebreaker">
+              <span>Tiebreaker (total points): {championshipTotal || '______'}</span>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

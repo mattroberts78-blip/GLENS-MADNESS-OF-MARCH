@@ -284,6 +284,10 @@ a:hover {
   color: var(--accent);
 }
 
+.badge-complete {
+  color: var(--success);
+}
+
 /* Bracket entry page */
 .bracket-entry {
   position: relative;
@@ -310,6 +314,49 @@ a:hover {
   z-index: 1;
 }
 
+.bracket-print-board {
+  display: none;
+}
+
+.bracket-print-title {
+  font-size: 1.4rem;
+  font-weight: 700;
+  margin: 0 0 0.75rem 0;
+  text-align: center;
+}
+
+.bracket-print-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(140px, 1fr));
+  gap: 0.75rem;
+  font-size: 0.75rem;
+}
+
+.bracket-print-column {
+  background: rgba(15, 23, 42, 0.9);
+  border-radius: var(--radius);
+  padding: 0.5rem;
+}
+
+.bracket-print-column--center {
+  grid-column: 3 / span 1;
+}
+
+.bracket-print-region-label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin: 0 0 0.25rem 0;
+  text-align: center;
+}
+
+.bracket-print-tiebreaker {
+  margin-top: 0.75rem;
+  font-size: 0.75rem;
+  text-align: center;
+}
+
 .bracket-layout {
   display: flex;
   flex-direction: column;
@@ -325,6 +372,17 @@ a:hover {
   flex-wrap: wrap;
   gap: 0.5rem;
   margin-bottom: 1rem;
+}
+
+.bracket-entry__actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 0.75rem;
+}
+
+.bracket-print-btn {
+  padding-inline: 0.9rem;
+  font-size: 0.85rem;
 }
 
 .bracket-tab {
@@ -527,6 +585,44 @@ a:hover {
 
   .bracket-round--championship .bracket-round__title {
     text-align: center;
+  }
+}
+
+@media print {
+  body {
+    background: #ffffff;
+    color: #000000;
+  }
+
+  .bg-logo,
+  .site-header,
+  .bracket-entry__actions,
+  .bracket-tabs,
+  .bracket-layout--region,
+  .bracket-layout--final,
+  .bracket-tiebreaker,
+  .bracket-actions,
+  .bracket-locked-msg {
+    display: none !important;
+  }
+
+  .page-container {
+    max-width: none;
+    padding: 0.5in;
+  }
+
+  .bracket-entry {
+    background: #ffffff;
+    box-shadow: none;
+    overflow: visible;
+  }
+
+  .bracket-entry::before {
+    display: none;
+  }
+
+  .bracket-print-board {
+    display: block;
   }
 }
 

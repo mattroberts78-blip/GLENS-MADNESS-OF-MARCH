@@ -29,6 +29,12 @@ CREATE TABLE IF NOT EXISTS entries (
   updated_at        TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- Demo scoring storage for this app: serialized picks and completion flag.
+-- In a production setup you would likely use the picks/games/teams tables instead.
+ALTER TABLE entries
+  ADD COLUMN IF NOT EXISTS picks_json JSONB,
+  ADD COLUMN IF NOT EXISTS picks_complete BOOLEAN DEFAULT FALSE;
+
 -- Tournament meta (single row per year/contest)
 CREATE TABLE IF NOT EXISTS contests (
   id          SERIAL PRIMARY KEY,
