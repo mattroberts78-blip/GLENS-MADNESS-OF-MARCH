@@ -45,6 +45,32 @@ export default async function BracketPage({
     );
   }
 
+  const contestResult = await sql`
+    SELECT id
+    FROM contests
+    ORDER BY created_at DESC
+    LIMIT 1
+  `;
+
+  let teams:
+    | {
+        region: string;
+        seed: number;
+        name: string | null;
+      }[]
+    | undefined;
+
+  if (contestResult.rowCount && contestResult.rows[0]) {
+    const contestId = (contestResult.rows[0] as { id: number }).id;
+    const teamsResult = await sql`
+      SELECT region, seed, name
+      FROM teams
+      WHERE contest_id = ${contestId}
+      ORDER BY region, seed
+    `;
+    teams = teamsResult.rows as typeof teams;
+  }
+
   return (
     <main className="page-container" style={{ maxWidth: 900 }}>
       <p style={{ marginBottom: '1rem' }}>
@@ -60,6 +86,7 @@ export default async function BracketPage({
         locked={!!entry.locked_at}
         initialPicks={(entry.picks_json as Record<string, 0 | 1> | null) ?? undefined}
         initialChampionshipTotal={entry.championship_total ?? undefined}
+        teams={teams}
       />
     </main>
   );

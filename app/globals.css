@@ -296,24 +296,6 @@ a:hover {
   overflow: hidden;
 }
 
-.bracket-entry::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background-image: url('/glensmadness.png');
-  background-repeat: no-repeat;
-  background-position: center;
-  background-size: 520px auto;
-  opacity: 0.18;
-  pointer-events: none;
-  z-index: 0;
-}
-
-.bracket-entry > * {
-  position: relative;
-  z-index: 1;
-}
-
 .bracket-print-board {
   display: none;
 }
@@ -485,8 +467,8 @@ a:hover {
   font-weight: 500;
   text-align: left;
   color: var(--text);
-  background: var(--bg);
-  border: 2px solid var(--border);
+  background: rgba(15, 23, 42, 0.9);
+  border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   cursor: pointer;
   transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
@@ -536,6 +518,26 @@ a:hover {
   overflow: visible;
   text-overflow: clip;
   white-space: normal;
+}
+
+/* Mobile layout: make each game read as a vertical card with two full-width picks */
+@media (max-width: 599px) {
+  .bracket-round__games {
+    gap: 0.9rem;
+  }
+
+  .bracket-game {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .bracket-game__vs {
+    align-self: center;
+  }
+
+  .bracket-team {
+    width: 100%;
+  }
 }
 
 @media (max-width: 899px) {

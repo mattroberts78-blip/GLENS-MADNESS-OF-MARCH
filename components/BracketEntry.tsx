@@ -13,18 +13,26 @@ const REGIONS = ['East', 'West', 'South', 'Midwest'] as const;
 type Region = (typeof REGIONS)[number];
 type TabKey = Region | 'Final Four';
 
+type TeamRow = {
+  region: string;
+  seed: number;
+  name: string | null;
+};
+
 export function BracketEntry({
   entryName,
   entryId,
   locked,
   initialPicks,
   initialChampionshipTotal,
+  teams,
 }: {
   entryName: string;
   entryId: number;
   locked: boolean;
   initialPicks?: Picks;
   initialChampionshipTotal?: number;
+  teams?: TeamRow[];
 }) {
   const [picks, setPicks] = useState<Picks>(initialPicks ?? {});
   const [championshipTotal, setChampionshipTotal] = useState(
@@ -37,6 +45,20 @@ export function BracketEntry({
     setPicks(initialPicks ?? {});
     setChampionshipTotal(initialChampionshipTotal != null ? String(initialChampionshipTotal) : '');
   }, [entryId, initialPicks, initialChampionshipTotal]);
+
+  const teamNameMap = useMemo(() => {
+    const map: Record<string, string> = {};
+    if (!teams) return map;
+    for (const t of teams) {
+      if (!t || !t.name) continue;
+      const normalizedRegion =
+        REGIONS.find((r) => r.toLowerCase() === String(t.region ?? '').toLowerCase()) ?? null;
+      if (!normalizedRegion) continue;
+      const key = `${normalizedRegion}-${t.seed}`;
+      map[key] = t.name;
+    }
+    return map;
+  }, [teams]);
 
   const gamesByRound = useMemo(() => {
     const map: Record<number, BracketGame[]> = {};
@@ -162,8 +184,12 @@ export function BracketEntry({
             {getRegionGames(round, region).map((game) => {
               const isRound1 = round === 1;
               const derived = !isRound1 ? getDerivedTeams(round, game.slot) : null;
-              const team1Label = isRound1 ? game.team1.label : (derived?.team1 ?? '');
-              const team2Label = isRound1 ? game.team2.label : (derived?.team2 ?? '');
+              const key1 = `${region}-${game.team1.seed}`;
+              const key2 = `${region}-${game.team2.seed}`;
+              const dbTeam1 = teamNameMap[key1];
+              const dbTeam2 = teamNameMap[key2];
+              const team1Label = isRound1 ? dbTeam1 || game.team1.label : (derived?.team1 ?? '');
+              const team2Label = isRound1 ? dbTeam2 || game.team2.label : (derived?.team2 ?? '');
               const canPick = isRound1 || (derived?.ready ?? false);
               const gameDisabled = locked || !canPick;
 
@@ -351,8 +377,12 @@ export function BracketEntry({
                 {getRegionGames(round, activeTab as Region).map((game) => {
                   const isRound1 = round === 1;
                   const derived = !isRound1 ? getDerivedTeams(round, game.slot) : null;
-                  const team1Label = isRound1 ? game.team1.label : (derived?.team1 ?? '');
-                  const team2Label = isRound1 ? game.team2.label : (derived?.team2 ?? '');
+                  const key1 = `${activeTab}-${game.team1.seed}`;
+                  const key2 = `${activeTab}-${game.team2.seed}`;
+                  const dbTeam1 = teamNameMap[key1];
+                  const dbTeam2 = teamNameMap[key2];
+                  const team1Label = isRound1 ? dbTeam1 || game.team1.label : (derived?.team1 ?? '');
+                  const team2Label = isRound1 ? dbTeam2 || game.team2.label : (derived?.team2 ?? '');
                   const canPick = isRound1 || (derived?.ready ?? false);
                   const gameDisabled = locked || !canPick;
 
