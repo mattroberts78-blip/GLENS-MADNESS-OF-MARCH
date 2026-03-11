@@ -118,12 +118,20 @@ export function BracketEntry({
       if (!game) return null;
       const pick = picks[game.id];
       if (pick === undefined) return null;
-      if (round === 1) return pick === 0 ? game.team1.label : game.team2.label;
+      if (round === 1) {
+        const regionIdx = Math.floor((slot - 1) / 8);
+        const region = REGIONS[regionIdx];
+        const key1 = region ? `${region}-${game.team1.seed}` : '';
+        const key2 = region ? `${region}-${game.team2.seed}` : '';
+        const label1 = (region && teamNameMap[key1]) || game.team1.label;
+        const label2 = (region && teamNameMap[key2]) || game.team2.label;
+        return pick === 0 ? label1 : label2;
+      }
       return pick === 0
         ? getWinnerLabel(round - 1, 2 * slot - 1)
         : getWinnerLabel(round - 1, 2 * slot);
     },
-    [gamesByRound, picks]
+    [gamesByRound, picks, teamNameMap]
   );
 
   /** For rounds 2+, get the two team labels (winners of feeder games). */
