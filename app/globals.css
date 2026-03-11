@@ -296,197 +296,8 @@ a:hover {
   overflow: hidden;
 }
 
-.bracket-print-board {
-  display: none;
-}
-
-.bracket-print-body {
-  display: flex;
-  justify-content: space-between;
-  gap: 0.5rem;
-  font-size: 0.7rem;
-}
-
-.bracket-print-side {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  min-width: 0;
-}
-
-.bracket-print-side--center {
-  flex: 0 0 auto;
-  width: 140px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-
-.bracket-print-region-block {
-  display: flex;
-  flex-direction: column;
-  gap: 0.15rem;
-}
-
-.bracket-print-ladder {
-  display: flex;
-  flex-direction: column;
-  gap: 0.15rem;
-}
-
-.bracket-print-round {
-  display: flex;
-  flex-direction: column;
-  gap: 0.1rem;
-}
-
-.bracket-print-game {
-  display: flex;
-  gap: 0.15rem;
-  align-items: stretch;
-}
-
-.bracket-print-game--vertical {
-  flex-direction: column;
-}
-
-.bracket-print-slot {
-  flex: 1;
-  min-height: 1.25rem;
-  padding: 0.2rem 0.35rem;
-  border: 1px solid #9ca3af;
-  border-radius: 3px;
-  background: #fff;
-  color: #111;
-  font-size: 0.6rem;
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-  word-break: break-word;
-}
-
-.bracket-print-seed {
-  flex-shrink: 0;
-  width: 0.9rem;
-  height: 0.9rem;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.55rem;
-  font-weight: 700;
-  background: #e5e7eb;
-  color: #374151;
-  border-radius: 2px;
-}
-
-.bracket-print-slot-label {
-  min-width: 0;
-}
-
-.bracket-print-center {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.bracket-print-center-block {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.2rem;
-  width: 100%;
-}
-
-.bracket-print-region-label--center {
-  margin-bottom: 0.15rem;
-}
-
-.bracket-print-header {
-  text-align: center;
-  margin-bottom: 0.75rem;
-}
-
-.bracket-print-logo {
-  display: block;
-  margin: 0 auto 0.25rem;
-  border-radius: 50%;
-}
-
-.bracket-print-brand {
-  font-size: 1.25rem;
-  font-weight: 700;
-  margin: 0 0 0.15rem 0;
-  letter-spacing: -0.02em;
-}
-
-.bracket-print-subtitle {
-  font-size: 0.95rem;
-  margin: 0;
-  opacity: 0.9;
-}
-
-.bracket-print-title {
-  font-size: 1.4rem;
-  font-weight: 700;
-  margin: 0 0 0.75rem 0;
-  text-align: center;
-}
-
-.bracket-print-champion {
-  margin-top: 0.75rem;
-  text-align: center;
-}
-
-.bracket-print-champion-label {
-  font-size: 0.85rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  margin-bottom: 0.35rem;
-}
-
-.bracket-print-champion-slot {
-  min-height: 2rem;
-  padding: 0.5rem 0.75rem;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  font-weight: 500;
-  background: var(--surface);
-}
-
-.bracket-print-grid {
-  display: grid;
-  grid-template-columns: repeat(5, minmax(140px, 1fr));
-  gap: 0.75rem;
-  font-size: 0.75rem;
-}
-
-.bracket-print-column {
-  background: rgba(15, 23, 42, 0.9);
-  border-radius: var(--radius);
-  padding: 0.5rem;
-}
-
-.bracket-print-column--center {
-  grid-column: 5 / span 1;
-}
-
-.bracket-print-region-label {
-  font-size: 0.8rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  margin: 0 0 0.25rem 0;
-  text-align: center;
-}
-
-.bracket-print-tiebreaker {
-  margin-top: 0.75rem;
-  font-size: 0.75rem;
-  text-align: center;
-}
+/* Print board: hidden on screen */
+.bp-board { display: none; }
 
 .bracket-layout {
   display: flex;
@@ -725,16 +536,20 @@ a:hover {
 
 @media print {
   @page {
-    size: A4 landscape;
-    margin: 0.15in;
+    size: landscape;
+    margin: 0;
   }
 
-  html,
-  body {
+  /* ── Reset everything ── */
+  html, body {
     margin: 0 !important;
     padding: 0 !important;
     width: 100% !important;
-    min-height: 100vh;
+    height: 100% !important;
+    background: #fff !important;
+    color: #000 !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
   }
 
   .page-wrap {
@@ -742,14 +557,8 @@ a:hover {
     padding: 0 !important;
     max-width: none !important;
     width: 100% !important;
-    min-height: auto;
-  }
-
-  body {
-    background: #1e3a5f;
-    color: #f0f4f8;
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
+    min-height: 0 !important;
+    display: block !important;
   }
 
   .page-container {
@@ -759,18 +568,14 @@ a:hover {
     padding: 0 !important;
   }
 
-  /* Hide everything except the bracket entry and its print board */
-  .page-container > *:not(.bracket-entry) {
-    display: none !important;
-  }
-
+  /* ── Hide everything that isn't the print board ── */
   .bg-logo,
   .site-header,
-  .bracket-entry__actions,
+  .page-container > *:not(.bracket-entry),
   .bracket-progress,
+  .bracket-entry__actions,
   .bracket-tabs,
-  .bracket-layout--region,
-  .bracket-layout--final,
+  .bracket-layout,
   .bracket-tiebreaker,
   .bracket-actions,
   .bracket-locked-msg {
@@ -778,188 +583,242 @@ a:hover {
   }
 
   .bracket-entry {
-    background: transparent;
-    box-shadow: none;
-    overflow: visible;
-    min-height: 0;
+    background: none !important;
+    box-shadow: none !important;
+    overflow: visible !important;
+    min-height: 0 !important;
     padding: 0 !important;
     margin: 0 !important;
   }
 
-  .bracket-entry::before {
-    display: none;
-  }
-
-  .bracket-print-board {
-    display: block !important;
+  /* ── Print board: fills the page ── */
+  .bp-board {
+    display: flex !important;
+    flex-direction: column;
+    width: 100%;
+    height: 100vh;
+    padding: 8px 10px;
+    box-sizing: border-box;
     background: linear-gradient(180deg, #1e3a5f 0%, #152a47 100%);
-    padding: 0.15in 0.2in;
-    margin: 0;
     color: #f0f4f8;
+    font-family: var(--font);
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
-    page-break-inside: avoid;
-    break-inside: avoid;
-    width: 100%;
-    box-sizing: border-box;
   }
 
-  .bracket-print-header {
-    margin-bottom: 0.2rem;
+  /* ── Header ── */
+  .bp-header {
     text-align: center;
+    flex-shrink: 0;
+    margin-bottom: 4px;
   }
 
-  .bracket-print-logo {
-    width: 48px;
-    height: 48px;
+  .bp-logo {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: block;
+    margin: 0 auto 2px;
   }
 
-  .bracket-print-brand {
-    color: #ffffff;
-    font-size: 1rem;
-    margin: 0 0 0.05rem 0;
+  .bp-title {
+    font-size: 11px;
+    font-weight: 700;
+    color: #fff;
+    margin: 0;
   }
 
-  .bracket-print-subtitle {
-    color: rgba(255, 255, 255, 0.9);
-    font-size: 0.7rem;
+  .bp-subtitle {
+    font-size: 8px;
+    color: rgba(255, 255, 255, 0.85);
+    margin: 0;
   }
 
-  /* Body: flex row, no shrinking so all columns and rounds are visible */
-  .bracket-print-body {
-    display: flex !important;
-    gap: 0.2in;
-    font-size: 0.65rem;
+  /* ── Body: 3-column flex row filling remaining height ── */
+  .bp-body {
+    display: flex;
+    flex: 1;
+    gap: 6px;
     min-height: 0;
-    overflow: visible !important;
   }
 
-  .bracket-print-side--left,
-  .bracket-print-side--right {
-    flex: 1 1 0%;
-    min-width: 1.5in;
-    overflow: visible !important;
-    display: flex !important;
-    flex-direction: column !important;
+  /* ── Side columns (left & right): each holds 2 regions stacked ── */
+  .bp-side {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+    min-height: 0;
   }
 
-  .bracket-print-side--center {
-    flex: 0 0 auto;
-    width: 1.3in;
+  .bp-side--center {
+    flex: 0 0 100px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 0;
   }
 
-  .bracket-print-region-block {
-    flex: none !important;
-    gap: 0.1rem;
-    overflow: visible !important;
+  /* ── Region: label + horizontal bracket ladder ── */
+  .bp-region {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
   }
 
-  .bracket-print-region-block + .bracket-print-region-block {
-    margin-top: 0.15rem;
+  .bp-region-label {
+    flex-shrink: 0;
+    color: #f59e0b;
+    font-size: 8px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    text-align: center;
+    margin: 0 0 2px 0;
   }
 
-  .bracket-print-ladder {
-    flex: none !important;
-    gap: 0.06rem;
-    overflow: visible !important;
-    display: flex !important;
-    flex-direction: column !important;
+  /* ── Ladder: horizontal row of round columns ── */
+  .bp-ladder {
+    display: flex;
+    flex: 1;
+    gap: 2px;
+    min-height: 0;
   }
 
-  .bracket-print-round {
-    flex: none !important;
-    gap: 0.04rem;
-    overflow: visible !important;
-    display: flex !important;
-    flex-direction: column !important;
+  .bp-ladder--rev {
+    flex-direction: row-reverse;
   }
 
-  .bracket-print-game {
-    gap: 0.06rem;
-    flex: none !important;
+  /* ── Round column: distributes slots vertically with space-around ── */
+  .bp-col {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    min-width: 0;
+    min-height: 0;
+    gap: 1px;
   }
 
-  /* Slot: ~13 characters max, narrow so bracket is compact */
-  .bracket-print-slot {
+  /* ── Slot: white box with dark text ── */
+  .bp-slot {
     background: #ffffff !important;
     color: #111827 !important;
-    border: 1px solid #9ca3af !important;
-    min-height: 0.75rem;
-    padding: 0.1rem 0.2rem;
-    font-size: 0.58rem;
-    line-height: 1.2;
-    max-width: 14ch;
-    width: 14ch;
-    flex: 0 0 auto;
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
+    border: 1px solid #94a3b8;
+    border-radius: 2px;
+    padding: 1px 3px;
+    font-size: 6.5px;
+    line-height: 1.3;
+    white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    min-height: 11px;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
   }
 
-  .bracket-print-seed {
+  .bp-seed {
+    flex-shrink: 0;
+    width: 10px;
+    height: 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 5.5px;
+    font-weight: 700;
     background: #e5e7eb !important;
     color: #374151 !important;
-    font-size: 0.48rem;
-    width: 0.65rem;
-    height: 0.65rem;
-    flex-shrink: 0;
+    border-radius: 2px;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
   }
 
-  .bracket-print-center .bracket-print-slot {
+  .bp-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    min-width: 0;
+  }
+
+  /* ── Center column ── */
+  .bp-center {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
     width: 100%;
-    max-width: 100%;
-    min-height: 0.82rem;
-    font-size: 0.56rem;
   }
 
-  .bracket-print-region-label {
-    color: #f59e0b;
-    font-size: 0.65rem;
+  .bp-center-label {
+    font-size: 7px;
     font-weight: 700;
+    color: #f59e0b;
     text-transform: uppercase;
     letter-spacing: 0.06em;
-    margin: 0 0 0.12rem 0;
     text-align: center;
   }
 
-  .bracket-print-champion {
-    margin-top: 0.2rem;
-    text-align: center;
+  .bp-center-games {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .bp-center-game {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+  }
+
+  .bp-center .bp-slot {
     width: 100%;
   }
 
-  .bracket-print-champion-label {
+  .bp-champion-label {
     background: #ffffff !important;
     color: #1e3a5f !important;
-    padding: 0.2rem 0.4rem;
-    border-radius: 3px;
-    display: block;
-    font-size: 0.65rem;
+    font-size: 8px;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.06em;
-    margin-bottom: 0.15rem;
-    border: 1px solid #9ca3af;
+    padding: 2px 8px;
+    border-radius: 3px;
+    border: 1px solid #94a3b8;
+    text-align: center;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
 
-  .bracket-print-champion-slot {
+  .bp-champion-box {
     background: #ffffff !important;
-    border: 1px solid #9ca3af !important;
-    color: #111827;
-    min-height: 1.2rem;
-    font-size: 0.65rem;
-    padding: 0.2rem 0.35rem;
+    color: #111827 !important;
+    border: 1px solid #94a3b8;
+    border-radius: 2px;
+    min-height: 16px;
+    width: 100%;
+    padding: 2px 4px;
+    font-size: 8px;
+    font-weight: 600;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
 
-  .bracket-print-tiebreaker {
-    color: rgba(255, 255, 255, 0.95);
-    font-size: 0.55rem;
-    margin-top: 0.2rem;
+  .bp-tiebreaker {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 6.5px;
+    text-align: center;
+    margin-top: 2px;
   }
 }
 
