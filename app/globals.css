@@ -515,9 +515,11 @@ a:hover {
 }
 
 .bracket-team__label {
-  overflow: visible;
-  text-overflow: clip;
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
   white-space: normal;
+  word-break: break-word;
 }
 
 /* Mobile layout: make each game read as a vertical card with two full-width picks */

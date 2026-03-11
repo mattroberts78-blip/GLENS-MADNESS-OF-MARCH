@@ -133,8 +133,8 @@ export function BracketEntry({
       const t1 = getWinnerLabel(prevRound, 2 * slot - 1);
       const t2 = getWinnerLabel(prevRound, 2 * slot);
       return {
-        team1: t1 ?? `Winner of ${ROUND_LABELS[prevRound]} · Game ${2 * slot - 1}`,
-        team2: t2 ?? `Winner of ${ROUND_LABELS[prevRound]} · Game ${2 * slot}`,
+        team1: t1 ?? '',
+        team2: t2 ?? '',
         ready: t1 != null && t2 != null,
       };
     },
