@@ -2,10 +2,7 @@ import { sql } from '@vercel/postgres';
 import { redirect } from 'next/navigation';
 import { getSession } from '@/lib/auth/session';
 import { signAdminToken, verifyAdminToken } from '@/lib/auth/admin-token';
-import { PaymentTable } from '@/components/PaymentTable';
-import { TeamsAdmin } from '@/components/TeamsAdmin';
-import { ContestResultsAdmin } from '@/components/ContestResultsAdmin';
-import { LockBracketsAdmin } from '@/components/LockBracketsAdmin';
+import { AdminDashboardShell } from '@/components/AdminDashboardShell';
 
 export const dynamic = 'force-dynamic';
 
@@ -72,43 +69,12 @@ export default async function AdminPage({
   }
 
   return (
-    <main className="page-container" style={{ maxWidth: 820 }}>
-      <h1 className="page-title">Admin</h1>
-      <p className="page-subtitle">
-        Glen&apos;s Madness of March — Logged in as <strong>{username}</strong>. Verify payment so a participant counts toward the overall winner.
-      </p>
-
-      <section className="card">
-        <h2 className="card-title">Participants</h2>
-        {dbError ? (
-          <p style={{ color: 'var(--error)', fontSize: '0.9rem', marginBottom: '1rem' }}>
-            Database error: {dbError}
-          </p>
-        ) : (
-          <PaymentTable participants={participants} adminToken={adminToken} />
-        )}
-      </section>
-
-      <section className="card" style={{ marginTop: '2rem' }}>
-        <h2 className="card-title">Lock brackets</h2>
-        <LockBracketsAdmin adminToken={adminToken} />
-      </section>
-
-      <section className="card" style={{ marginTop: '2rem' }}>
-        <p className="page-subtitle">
-          Set the team names for each seed and region in the current contest. This updates the{' '}
-          <code>teams</code> table in Neon.
-        </p>
-        <TeamsAdmin adminToken={adminToken} initialTeams={teams} />
-      </section>
-
-      <section className="card" style={{ marginTop: '2rem' }}>
-        <h2 className="card-title">Tournament results (scoring)</h2>
-        <p className="page-subtitle">
-          Set winners for each game to run scoring. Game id format: r1-1 … r6-1. Value 0 = first team won, 1 = second team won. Save and the scoreboard will update.
-        </p>
-        <ContestResultsAdmin adminToken={adminToken} />
-      </section>
-    </main>
+    <AdminDashboardShell
+      username={username}
+      adminToken={adminToken}
+      participants={participants}
+      teams={teams}
+      dbError={dbError}
+    />
   );
 }
