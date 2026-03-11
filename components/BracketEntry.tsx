@@ -467,7 +467,11 @@ export function BracketEntry({
 
       {/* Print-only full bracket layout */}
       <div className="bracket-print-board">
-        <h2 className="bracket-print-title">{entryName}</h2>
+        <div className="bracket-print-header">
+          <img src="/glensmadness.png" alt="" className="bracket-print-logo" width={80} height={80} />
+          <h1 className="bracket-print-brand">Glen&apos;s Madness of March</h1>
+          <p className="bracket-print-subtitle">{entryName}</p>
+        </div>
         <div className="bracket-print-grid">
           <div className="bracket-print-column">
             <h3 className="bracket-print-region-label">West</h3>
@@ -488,6 +492,12 @@ export function BracketEntry({
           <div className="bracket-print-column bracket-print-column--center">
             <h3 className="bracket-print-region-label">Final Four</h3>
             {renderFinalFourBracket()}
+            <div className="bracket-print-champion">
+              <div className="bracket-print-champion-label">CHAMPION</div>
+              <div className="bracket-print-champion-slot">
+                {getWinnerLabel(6, 1) ?? ''}
+              </div>
+            </div>
             <div className="bracket-print-tiebreaker">
               <span>Tiebreaker (total points): {championshipTotal || '______'}</span>
             </div>
