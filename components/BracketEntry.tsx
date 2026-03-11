@@ -285,6 +285,93 @@ export function BracketEntry({
     </div>
   );
 
+  /** Print-only: one region as a ladder of rounds (no buttons, divs only). */
+  const renderPrintRegionLadder = (region: Region) => {
+    const rounds = [1, 2, 3, 4] as const;
+    return (
+      <div className="bracket-print-ladder">
+        {rounds.map((round) => {
+          const games = getRegionGames(round, region);
+          return (
+            <div key={round} className="bracket-print-round" data-round={round}>
+              {games.map((game) => {
+                const isRound1 = round === 1;
+                const derived = !isRound1 ? getDerivedTeams(round, game.slot) : null;
+                const key1 = `${region}-${game.team1.seed}`;
+                const key2 = `${region}-${game.team2.seed}`;
+                const dbTeam1 = teamNameMap[key1];
+                const dbTeam2 = teamNameMap[key2];
+                const team1Label = isRound1 ? dbTeam1 || game.team1.label : (derived?.team1 ?? '');
+                const team2Label = isRound1 ? dbTeam2 || game.team2.label : (derived?.team2 ?? '');
+                return (
+                  <div key={game.id} className="bracket-print-game">
+                    <div className="bracket-print-slot">
+                      {isRound1 && game.team1.seed > 0 && (
+                        <span className="bracket-print-seed">{game.team1.seed}</span>
+                      )}
+                      <span className="bracket-print-slot-label">{team1Label}</span>
+                    </div>
+                    <div className="bracket-print-slot">
+                      {isRound1 && game.team2.seed > 0 && (
+                        <span className="bracket-print-seed">{game.team2.seed}</span>
+                      )}
+                      <span className="bracket-print-slot-label">{team2Label}</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
+
+  /** Print-only: center column (Final Four + Champion + Tiebreaker) as simple slots. */
+  const renderPrintCenter = () => {
+    const semiGames = gamesByRound[5] ?? [];
+    const champGames = gamesByRound[6] ?? [];
+    return (
+      <div className="bracket-print-center">
+        <div className="bracket-print-center-block">
+          <div className="bracket-print-region-label bracket-print-region-label--center">
+            Final Four
+          </div>
+          {semiGames.map((game) => {
+            const d = getDerivedTeams(5, game.slot);
+            return (
+              <div key={game.id} className="bracket-print-game bracket-print-game--vertical">
+                <div className="bracket-print-slot">{d.team1}</div>
+                <div className="bracket-print-slot">{d.team2}</div>
+              </div>
+            );
+          })}
+        </div>
+        <div className="bracket-print-center-block">
+          <div className="bracket-print-region-label bracket-print-region-label--center">
+            Championship
+          </div>
+          {champGames.map((game) => {
+            const d = getDerivedTeams(6, game.slot);
+            return (
+              <div key={game.id} className="bracket-print-game bracket-print-game--vertical">
+                <div className="bracket-print-slot">{d.team1}</div>
+                <div className="bracket-print-slot">{d.team2}</div>
+              </div>
+            );
+          })}
+        </div>
+        <div className="bracket-print-champion">
+          <div className="bracket-print-champion-label">CHAMPION</div>
+          <div className="bracket-print-champion-slot">{getWinnerLabel(6, 1) ?? ''}</div>
+        </div>
+        <div className="bracket-print-tiebreaker">
+          Tiebreaker (total points): {championshipTotal || '______'}
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="bracket-entry" data-bracket-mounted style={{ minHeight: 400 }}>
       <div className="bracket-progress card">
@@ -465,41 +552,35 @@ export function BracketEntry({
         <p className="bracket-locked-msg">This bracket is locked and can no longer be edited.</p>
       )}
 
-      {/* Print-only full bracket layout */}
+      {/* Print-only: classic bracket layout matching Bracket Look.png */}
       <div className="bracket-print-board">
         <div className="bracket-print-header">
           <img src="/glensmadness.png" alt="" className="bracket-print-logo" width={80} height={80} />
           <h1 className="bracket-print-brand">Glen&apos;s Madness of March</h1>
           <p className="bracket-print-subtitle">{entryName}</p>
         </div>
-        <div className="bracket-print-grid">
-          <div className="bracket-print-column">
-            <h3 className="bracket-print-region-label">West</h3>
-            {renderRegionBracket('West')}
-          </div>
-          <div className="bracket-print-column">
-            <h3 className="bracket-print-region-label">East</h3>
-            {renderRegionBracket('East')}
-          </div>
-          <div className="bracket-print-column">
-            <h3 className="bracket-print-region-label">South</h3>
-            {renderRegionBracket('South')}
-          </div>
-          <div className="bracket-print-column">
-            <h3 className="bracket-print-region-label">Midwest</h3>
-            {renderRegionBracket('Midwest')}
-          </div>
-          <div className="bracket-print-column bracket-print-column--center">
-            <h3 className="bracket-print-region-label">Final Four</h3>
-            {renderFinalFourBracket()}
-            <div className="bracket-print-champion">
-              <div className="bracket-print-champion-label">CHAMPION</div>
-              <div className="bracket-print-champion-slot">
-                {getWinnerLabel(6, 1) ?? ''}
-              </div>
+        <div className="bracket-print-body">
+          <div className="bracket-print-side bracket-print-side--left">
+            <div className="bracket-print-region-block">
+              <h3 className="bracket-print-region-label">West</h3>
+              {renderPrintRegionLadder('West')}
             </div>
-            <div className="bracket-print-tiebreaker">
-              <span>Tiebreaker (total points): {championshipTotal || '______'}</span>
+            <div className="bracket-print-region-block">
+              <h3 className="bracket-print-region-label">South</h3>
+              {renderPrintRegionLadder('South')}
+            </div>
+          </div>
+          <div className="bracket-print-side bracket-print-side--center">
+            {renderPrintCenter()}
+          </div>
+          <div className="bracket-print-side bracket-print-side--right">
+            <div className="bracket-print-region-block">
+              <h3 className="bracket-print-region-label">East</h3>
+              {renderPrintRegionLadder('East')}
+            </div>
+            <div className="bracket-print-region-block">
+              <h3 className="bracket-print-region-label">Midwest</h3>
+              {renderPrintRegionLadder('Midwest')}
             </div>
           </div>
         </div>
