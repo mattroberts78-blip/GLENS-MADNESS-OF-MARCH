@@ -106,8 +106,9 @@ export function TeamsAdmin({
                 const key = `${region}-${seed}`;
                 const value = teams[key] ?? '';
                 return (
-                  <React.Fragment key={key}>
+                  <>
                     <label
+                      key={`${key}-label`}
                       htmlFor={key}
                       style={{
                         fontSize: '0.8rem',
@@ -118,6 +119,7 @@ export function TeamsAdmin({
                       {seed}
                     </label>
                     <input
+                      key={`${key}-input`}
                       id={key}
                       type="text"
                       value={value}
@@ -126,7 +128,7 @@ export function TeamsAdmin({
                       className="input"
                       style={{ fontSize: '0.85rem', padding: '0.3rem 0.45rem' }}
                     />
-                  </React.Fragment>
+                  </>
                 );
               })}
             </div>
