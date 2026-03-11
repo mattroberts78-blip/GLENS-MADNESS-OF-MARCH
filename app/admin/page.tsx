@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import { getSession } from '@/lib/auth/session';
 import { signAdminToken, verifyAdminToken } from '@/lib/auth/admin-token';
 import { PaymentTable } from '@/components/PaymentTable';
+import { TeamsAdmin } from '@/components/TeamsAdmin';
 
 export const dynamic = 'force-dynamic';
 
@@ -30,6 +31,11 @@ export default async function AdminPage({
     entry_count: string;
   }[] = [];
   let dbError: string | null = null;
+  let teams: {
+    region: string;
+    seed: number;
+    name: string | null;
+  }[] = [];
 
   try {
     const participantsResult = await sql`
@@ -41,6 +47,23 @@ export default async function AdminPage({
       LIMIT 100
     `;
     participants = participantsResult.rows as typeof participants;
+
+    const contestResult = await sql`
+      SELECT id
+      FROM contests
+      ORDER BY created_at DESC
+      LIMIT 1
+    `;
+    const contestRow = contestResult.rows[0] as { id: number } | undefined;
+    if (contestRow) {
+      const teamsResult = await sql`
+        SELECT region, seed, name
+        FROM teams
+        WHERE contest_id = ${contestRow.id}
+        ORDER BY region, seed
+      `;
+      teams = teamsResult.rows as typeof teams;
+    }
   } catch (err: unknown) {
     console.error('[admin page]', err);
     dbError = err instanceof Error ? err.message : 'Unknown database error';
@@ -62,6 +85,15 @@ export default async function AdminPage({
         ) : (
           <PaymentTable participants={participants} adminToken={adminToken} />
         )}
+      </section>
+
+      <section className="card" style={{ marginTop: '2rem' }}>
+        <h2 className="card-title">Tournament teams</h2>
+        <p className="page-subtitle">
+          Set the team names for each seed and region in the current contest. This updates the{' '}
+          <code>teams</code> table in Neon.
+        </p>
+        <TeamsAdmin adminToken={adminToken} initialTeams={teams} />
       </section>
     </main>
   );
