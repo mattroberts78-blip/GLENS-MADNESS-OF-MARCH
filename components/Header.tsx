@@ -3,10 +3,11 @@ import { getSession } from '@/lib/auth/session';
 
 export async function Header() {
   const session = await getSession();
+  const homeHref = session?.isAdmin ? '/admin' : '/';
 
   return (
     <header className="site-header">
-      <Link href="/" className="site-brand">
+      <Link href={homeHref} className="site-brand">
         <span className="site-logo-wrap">
           <img src="/glensmadness.png" alt="Glen" width={56} height={56} className="site-logo" />
         </span>
@@ -36,7 +37,6 @@ export async function Header() {
           <>
             <Link href="/login" className="nav-link nav-link-cta">Log in</Link>
             <Link href="/create-account" className="nav-link">Create account</Link>
-            <Link href="/admin" className="nav-link nav-link-muted">Admin</Link>
           </>
         )}
       </nav>

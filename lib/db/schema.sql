@@ -17,6 +17,9 @@ CREATE TABLE IF NOT EXISTS credentials (
   payment_verified_at TIMESTAMPTZ,
   created_at          TIMESTAMPTZ DEFAULT NOW()
 );
+ALTER TABLE credentials
+  ADD COLUMN IF NOT EXISTS first_name TEXT,
+  ADD COLUMN IF NOT EXISTS last_name TEXT;
 
 -- Person = one credential. Entries = their brackets (multiple per person).
 CREATE TABLE IF NOT EXISTS entries (
@@ -42,6 +45,9 @@ CREATE TABLE IF NOT EXISTS contests (
   bracket_lock_at TIMESTAMPTZ NOT NULL,     -- no edits after this
   created_at  TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- Results for scoring: game id (e.g. r1-1) -> 0 (team1) or 1 (team2) winner
+ALTER TABLE contests ADD COLUMN IF NOT EXISTS results_json JSONB;
 
 -- Teams in the tournament (seeded)
 CREATE TABLE IF NOT EXISTS teams (

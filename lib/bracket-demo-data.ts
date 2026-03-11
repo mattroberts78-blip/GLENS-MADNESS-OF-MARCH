@@ -9,25 +9,8 @@ const R1_MATCHUPS: [number, number][] = [
   [1, 16], [8, 9], [4, 13], [5, 12], [2, 15], [7, 10], [3, 14], [6, 11],
 ];
 
-// 64 random team names (college-style) — one per Round 1 slot
-const TEAM_NAMES = [
-  'Riverside Hawks', 'State Tech Titans', 'Central Valley Bears', 'Metro State Cougars',
-  'Northern Wolves', 'Lakeview Eagles', 'Capital City Rams', 'Valley State Broncos',
-  'Mountain View Wildcats', 'Pacific Coast Tigers', 'Desert State Sun Devils', 'Prairie Tech Engineers',
-  'Bayou Gators', 'Highland Scots', 'Twin Cities Huskies', 'Golden Gate Seawolves',
-  'Midland Mustangs', 'Coastal Carolina Chanticleers', 'Blue Ridge Mountaineers', 'Lakeshore Lakers',
-  'Canyon State Roadrunners', 'Pine Valley Owls', 'Riverbend Racers', 'Summit State Miners',
-  'Thunder Bay Storm', 'Silver City Aggies', 'Greenfield Terriers', 'Rocky Peak Falcons',
-  'Harbor State Mariners', 'Plains Tech Bison', 'Cedar Falls Panthers', 'Redwood Giants',
-  'Frostburg Bobcats', 'Sunrise Valley Vandals', 'Mill Creek Crusaders', 'Oakwood Spartans',
-  'Cape Coast Seahawks', 'Meadowbrook Jayhawks', 'Stonewall Generals', 'Crystal Lake Tritons',
-  'Pioneer Valley Minutemen', 'Evergreen State Cougars', 'Granite State Wildcats', 'Lone Star Longhorns',
-  'Buckeye Valley Cardinals', 'Palmetto Gamecocks', 'Hoosier State Hoosiers', 'Badger State Badgers',
-  'Gopher State Gophers', 'Hawkeye State Hawkeyes', 'Volunteer State Volunteers', 'Tar Heel State Heels',
-  'Crimson Tide State', 'Tiger Bay Bengals', 'Seminole State Seminoles', 'Hurricane Coast Canes',
-  'Rebel State Rebels', 'Razorback Valley Hogs', 'Wildcat Mountain Cats', 'Bearcat State Bearcats',
-  'Bruin Coast Bruins', 'Trojan State Trojans', 'Duck Pond Ducks', 'Beaver State Beavers',
-];
+// Placeholder list for seeding structure only; actual names now come from admin-entered teams.
+const TEAM_NAMES: string[] = [];
 
 export type BracketGame = {
   id: string;

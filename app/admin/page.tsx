@@ -4,6 +4,8 @@ import { getSession } from '@/lib/auth/session';
 import { signAdminToken, verifyAdminToken } from '@/lib/auth/admin-token';
 import { PaymentTable } from '@/components/PaymentTable';
 import { TeamsAdmin } from '@/components/TeamsAdmin';
+import { ContestResultsAdmin } from '@/components/ContestResultsAdmin';
+import { LockBracketsAdmin } from '@/components/LockBracketsAdmin';
 
 export const dynamic = 'force-dynamic';
 
@@ -88,12 +90,24 @@ export default async function AdminPage({
       </section>
 
       <section className="card" style={{ marginTop: '2rem' }}>
-        <h2 className="card-title">Tournament teams</h2>
+        <h2 className="card-title">Lock brackets</h2>
+        <LockBracketsAdmin adminToken={adminToken} />
+      </section>
+
+      <section className="card" style={{ marginTop: '2rem' }}>
         <p className="page-subtitle">
           Set the team names for each seed and region in the current contest. This updates the{' '}
           <code>teams</code> table in Neon.
         </p>
         <TeamsAdmin adminToken={adminToken} initialTeams={teams} />
+      </section>
+
+      <section className="card" style={{ marginTop: '2rem' }}>
+        <h2 className="card-title">Tournament results (scoring)</h2>
+        <p className="page-subtitle">
+          Set winners for each game to run scoring. Game id format: r1-1 … r6-1. Value 0 = first team won, 1 = second team won. Save and the scoreboard will update.
+        </p>
+        <ContestResultsAdmin adminToken={adminToken} />
       </section>
     </main>
   );

@@ -148,7 +148,6 @@ export function BracketEntry({
 
   const pickedCount = Object.keys(picks).length;
   const totalGames = (DEMO_BRACKET_GAMES && DEMO_BRACKET_GAMES.length) || 63;
-  const complete = pickedCount === totalGames && championshipTotal.trim() !== '';
 
   const handleSave = () => {
     if (locked) return;
@@ -156,7 +155,6 @@ export function BracketEntry({
       picks,
       championshipTotal,
     };
-
     fetch(`/api/entries/${entryId}/picks`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -448,9 +446,9 @@ export function BracketEntry({
             type="button"
             onClick={handleSave}
             className="btn btn-primary"
-            disabled={!complete}
+            disabled={locked}
           >
-            {saved ? 'Saved!' : 'Save bracket'}
+            {saved ? 'Saved!' : 'Save picks'}
           </button>
         </div>
       )}

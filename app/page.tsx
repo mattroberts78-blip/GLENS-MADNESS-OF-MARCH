@@ -1,7 +1,7 @@
 import Link from 'next/link';
-import { redirect } from 'next/navigation';
 import { sql } from '@vercel/postgres';
 import { getSession } from '@/lib/auth/session';
+import { DisplayNameForm } from '@/components/DisplayNameForm';
 
 export const dynamic = 'force-dynamic';
 
@@ -9,12 +9,18 @@ export default async function HomePage() {
   const session = await getSession();
 
   if (session && !session.isAdmin) {
-    const entriesResult = await sql`
-      SELECT id, name, locked_at, picks_complete
-      FROM entries
-      WHERE credential_id = ${session.credentialId}
-      ORDER BY id ASC
-    `;
+    const [credentialRow, entriesResult] = await Promise.all([
+      sql`SELECT first_name, last_name FROM credentials WHERE id = ${session.credentialId}`.then(
+        (r) => r.rows[0] as { first_name: string | null; last_name: string | null } | undefined
+      ),
+      sql`
+        SELECT id, name, locked_at, picks_complete
+        FROM entries
+        WHERE credential_id = ${session.credentialId}
+        ORDER BY id ASC
+      `,
+    ]);
+
     const entries = entriesResult.rows as {
       id: number;
       name: string;
@@ -28,6 +34,12 @@ export default async function HomePage() {
         <p className="page-subtitle">
           Logged in as <strong>{session.username}</strong>. You have {entries.length} bracket{entries.length === 1 ? '' : 's'} to fill out.
         </p>
+
+        <DisplayNameForm
+          initialFirstName={credentialRow?.first_name ?? null}
+          initialLastName={credentialRow?.last_name ?? null}
+        />
+
         <ul className="bracket-list">
           {entries.length === 0 ? (
             <li className="card" style={{ padding: '1.5rem', color: 'var(--text-muted)' }}>
@@ -72,9 +84,6 @@ export default async function HomePage() {
         </Link>
         <Link href="/login" className="btn btn-secondary">
           Log in
-        </Link>
-        <Link href="/admin" className="btn btn-secondary">
-          Admin
         </Link>
       </nav>
     </main>

@@ -20,7 +20,7 @@ export function PaymentTable({
 
   useEffect(() => {
     function onMessage(e: MessageEvent) {
-      if (e.data === 'payment-updated') {
+      if (e.data === 'payment-updated' || e.data === 'pin-updated') {
         const url = new URL(window.location.href);
         url.searchParams.set('t', adminToken);
         window.location.href = url.toString();
@@ -48,12 +48,13 @@ export function PaymentTable({
             <th style={{ textAlign: 'left', padding: '0.5rem 0.75rem', borderBottom: '1px solid var(--border)' }}>Email</th>
             <th style={{ textAlign: 'left', padding: '0.5rem 0.75rem', borderBottom: '1px solid var(--border)' }}>Brackets</th>
             <th style={{ textAlign: 'left', padding: '0.5rem 0.75rem', borderBottom: '1px solid var(--border)' }}>Payment verified</th>
+            <th style={{ textAlign: 'left', padding: '0.5rem 0.75rem', borderBottom: '1px solid var(--border)' }}>Reset PIN</th>
           </tr>
         </thead>
         <tbody>
           {participants.length === 0 ? (
             <tr>
-              <td colSpan={3} style={{ padding: '1rem 0.75rem', color: 'var(--text-muted)' }}>
+              <td colSpan={4} style={{ padding: '1rem 0.75rem', color: 'var(--text-muted)' }}>
                 No participants yet. Users create accounts from the home page.
               </td>
             </tr>
@@ -88,6 +89,34 @@ export function PaymentTable({
                       </form>
                     </>
                   )}
+                </td>
+                <td style={{ padding: '0.5rem 0.75rem', borderTop: '1px solid var(--border)' }}>
+                  <form
+                    action="/api/admin/reset-pin"
+                    method="POST"
+                    target="payment-frame"
+                    style={{ display: 'flex', gap: '0.25rem', alignItems: 'center' }}
+                  >
+                    <input type="hidden" name="_token" value={adminToken} />
+                    <input type="hidden" name="credentialId" value={p.id} />
+                    <input
+                      name="pin"
+                      type="text"
+                      inputMode="numeric"
+                      pattern="\d{4}"
+                      maxLength={4}
+                      placeholder="1234"
+                      className="input"
+                      style={{ maxWidth: 80, padding: '0.25rem 0.4rem', fontSize: '0.8rem' }}
+                    />
+                    <button
+                      type="submit"
+                      className="btn btn-secondary"
+                      style={{ padding: '0.25rem 0.5rem', fontSize: '0.8rem' }}
+                    >
+                      Set PIN
+                    </button>
+                  </form>
                 </td>
               </tr>
             ))
