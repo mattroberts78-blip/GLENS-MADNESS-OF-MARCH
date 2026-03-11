@@ -726,7 +726,23 @@ a:hover {
 @media print {
   @page {
     size: A4 landscape;
-    margin: 0.2in;
+    margin: 0.15in;
+  }
+
+  html,
+  body {
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    min-height: 100vh;
+  }
+
+  .page-wrap {
+    margin: 0 !important;
+    padding: 0 !important;
+    max-width: none !important;
+    width: 100% !important;
+    min-height: auto;
   }
 
   body {
@@ -734,6 +750,18 @@ a:hover {
     color: #f0f4f8;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
+  }
+
+  .page-container {
+    max-width: none !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* Hide everything except the bracket entry and its print board */
+  .page-container > *:not(.bracket-entry) {
+    display: none !important;
   }
 
   .bg-logo,
@@ -749,17 +777,13 @@ a:hover {
     display: none !important;
   }
 
-  .page-container {
-    max-width: none;
-    padding: 0;
-    margin: 0;
-  }
-
   .bracket-entry {
     background: transparent;
     box-shadow: none;
     overflow: visible;
     min-height: 0;
+    padding: 0 !important;
+    margin: 0 !important;
   }
 
   .bracket-entry::before {
@@ -769,7 +793,8 @@ a:hover {
   .bracket-print-board {
     display: block !important;
     background: linear-gradient(180deg, #1e3a5f 0%, #152a47 100%);
-    padding: 0.2in 0.25in;
+    padding: 0.15in 0.2in;
+    margin: 0;
     color: #f0f4f8;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
@@ -780,9 +805,8 @@ a:hover {
   }
 
   .bracket-print-header {
-    margin-bottom: 0.25rem;
+    margin-bottom: 0.2rem;
     text-align: center;
-    flex-shrink: 0;
   }
 
   .bracket-print-logo {
@@ -801,27 +825,33 @@ a:hover {
     font-size: 0.7rem;
   }
 
+  /* Body: flex row, no shrinking so all columns and rounds are visible */
   .bracket-print-body {
+    display: flex !important;
     gap: 0.2in;
     font-size: 0.65rem;
-    flex: 1 1 auto;
     min-height: 0;
+    overflow: visible !important;
   }
 
   .bracket-print-side--left,
   .bracket-print-side--right {
-    flex: 1 1 0;
-    min-width: 0;
+    flex: 1 1 0%;
+    min-width: 1.5in;
+    overflow: visible !important;
+    display: flex !important;
+    flex-direction: column !important;
   }
 
   .bracket-print-side--center {
     flex: 0 0 auto;
-    width: 1.4in;
+    width: 1.3in;
   }
 
   .bracket-print-region-block {
-    flex: none;
+    flex: none !important;
     gap: 0.1rem;
+    overflow: visible !important;
   }
 
   .bracket-print-region-block + .bracket-print-region-block {
@@ -829,28 +859,42 @@ a:hover {
   }
 
   .bracket-print-ladder {
-    flex: none;
+    flex: none !important;
     gap: 0.06rem;
+    overflow: visible !important;
+    display: flex !important;
+    flex-direction: column !important;
   }
 
   .bracket-print-round {
+    flex: none !important;
     gap: 0.04rem;
+    overflow: visible !important;
+    display: flex !important;
+    flex-direction: column !important;
   }
 
   .bracket-print-game {
     gap: 0.06rem;
+    flex: none !important;
   }
 
+  /* Slot: ~13 characters max, narrow so bracket is compact */
   .bracket-print-slot {
     background: #ffffff !important;
     color: #111827 !important;
     border: 1px solid #9ca3af !important;
     min-height: 0.75rem;
-    padding: 0.1rem 0.18rem;
+    padding: 0.1rem 0.2rem;
     font-size: 0.58rem;
     line-height: 1.2;
+    max-width: 14ch;
+    width: 14ch;
+    flex: 0 0 auto;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .bracket-print-seed {
@@ -859,10 +903,12 @@ a:hover {
     font-size: 0.48rem;
     width: 0.65rem;
     height: 0.65rem;
+    flex-shrink: 0;
   }
 
   .bracket-print-center .bracket-print-slot {
     width: 100%;
+    max-width: 100%;
     min-height: 0.82rem;
     font-size: 0.56rem;
   }
