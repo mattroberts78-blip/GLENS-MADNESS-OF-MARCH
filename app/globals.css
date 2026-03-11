@@ -554,25 +554,6 @@ a:hover {
     padding-bottom: 2.5rem;
   }
 
-  .bracket-layout--region {
-    display: grid;
-    grid-template-columns: repeat(4, minmax(180px, 1fr));
-    gap: 1rem;
-    align-items: flex-start;
-  }
-
-  .bracket-layout--final {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(220px, 1fr));
-    gap: 1rem;
-    align-items: flex-start;
-  }
-
-  .bracket-layout--region .bracket-round.card,
-  .bracket-layout--final .bracket-round.card {
-    margin-bottom: 0;
-  }
-
   .bracket-game::after {
     content: '';
     position: absolute;
