@@ -5,7 +5,11 @@ import { DisplayNameForm } from '@/components/DisplayNameForm';
 
 export const dynamic = 'force-dynamic';
 
-export default async function HomePage() {
+export default async function HomePage({
+  searchParams,
+}: {
+  searchParams?: { edit?: string };
+}) {
   const session = await getSession();
 
   if (session && !session.isAdmin) {
@@ -28,6 +32,13 @@ export default async function HomePage() {
       picks_complete: boolean | null;
     }[];
 
+    const first = (credentialRow?.first_name ?? '').trim();
+    const last = (credentialRow?.last_name ?? '').trim();
+    const hasName = first !== '' || last !== '';
+    const bracketsLocked = entries.some((e) => e.locked_at != null);
+    const showEditName = searchParams?.edit === 'name' && !bracketsLocked;
+    const showNameForm = (!hasName || showEditName) && !bracketsLocked;
+
     return (
       <main className="page-container">
         <h1 className="page-title">Your brackets</h1>
@@ -35,10 +46,12 @@ export default async function HomePage() {
           Logged in as <strong>{session.username}</strong>. You have {entries.length} bracket{entries.length === 1 ? '' : 's'} to fill out.
         </p>
 
-        <DisplayNameForm
-          initialFirstName={credentialRow?.first_name ?? null}
-          initialLastName={credentialRow?.last_name ?? null}
-        />
+        {showNameForm && (
+          <DisplayNameForm
+            initialFirstName={credentialRow?.first_name ?? null}
+            initialLastName={credentialRow?.last_name ?? null}
+          />
+        )}
 
         <ul className="bracket-list">
           {entries.length === 0 ? (

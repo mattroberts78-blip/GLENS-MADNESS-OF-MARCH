@@ -1,9 +1,29 @@
 import Link from 'next/link';
 import { getSession } from '@/lib/auth/session';
+import { sql } from '@vercel/postgres';
 
 export async function Header() {
   const session = await getSession();
   const homeHref = session?.isAdmin ? '/admin' : '/';
+
+  let displayName: string = session?.username ?? '';
+  let bracketsLocked = false;
+  if (session && !session.isAdmin) {
+    try {
+      const row = await sql`
+        SELECT c.first_name, c.last_name,
+               (SELECT COUNT(*)::int FROM entries e WHERE e.credential_id = c.id AND e.locked_at IS NOT NULL) AS locked_count
+        FROM credentials c
+        WHERE c.id = ${session.credentialId}
+      `.then((r) => r.rows[0] as { first_name: string | null; last_name: string | null; locked_count: number } | undefined);
+      const first = (row?.first_name ?? '').trim();
+      const last = (row?.last_name ?? '').trim();
+      displayName = first || last ? `${first} ${last}`.trim() : session.username;
+      bracketsLocked = (Number(row?.locked_count) || 0) > 0;
+    } catch {
+      // keep defaults
+    }
+  }
 
   return (
     <header className="site-header">
@@ -30,6 +50,14 @@ export async function Header() {
                 Log out
               </button>
             </form>
+            <span className="nav-link" style={{ cursor: 'default', color: 'var(--text)' }}>
+              {displayName}
+            </span>
+            {!bracketsLocked && (
+              <Link href="/?edit=name" className="nav-link" style={{ fontSize: '0.8rem' }}>
+                Change
+              </Link>
+            )}
             <Link href="/" className="nav-link">My brackets</Link>
             <Link href="/scoreboard" className="nav-link">Scoreboard</Link>
           </>

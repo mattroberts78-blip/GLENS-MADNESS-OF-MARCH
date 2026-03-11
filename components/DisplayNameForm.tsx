@@ -30,6 +30,7 @@ export function DisplayNameForm({
       const data = (await res.json()) as { ok?: boolean };
       if (!res.ok || !data.ok) throw new Error('Save failed');
       setMessage('Saved. This name will appear on the scoreboard.');
+      window.location.href = '/';
     } catch {
       setMessage('Failed to save. Try again.');
     } finally {
