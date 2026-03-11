@@ -39,7 +39,8 @@ export default async function ScoreboardPage() {
       ORDER BY created_at DESC
       LIMIT 1
     `;
-    contest = (contestResult.rows[0] as typeof contest) ?? null;
+    const contestRow = contestResult.rows[0];
+    contest = contestRow != null ? (contestRow as unknown as { id: number; name: string; results_json: unknown }) : null;
 
     if (contest) {
       const entriesResult = await sql`
