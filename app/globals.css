@@ -598,7 +598,8 @@ a:hover {
     position: relative;
     width: 100%;
     height: 100vh;
-    padding: 8px 10px;
+    max-height: 100vh;
+    padding: 5px 8px;
     box-sizing: border-box;
     background: linear-gradient(180deg, #1e3a5f 0%, #152a47 100%);
     color: #f0f4f8;
@@ -630,26 +631,26 @@ a:hover {
   .bp-header {
     text-align: center;
     flex-shrink: 0;
-    margin-bottom: 4px;
+    margin-bottom: 2px;
   }
 
   .bp-logo {
-    width: 36px;
-    height: 36px;
+    width: 28px;
+    height: 28px;
     border-radius: 50%;
     display: block;
-    margin: 0 auto 2px;
+    margin: 0 auto 1px;
   }
 
   .bp-title {
-    font-size: 11px;
+    font-size: 10px;
     font-weight: 700;
     color: #fff;
     margin: 0;
   }
 
   .bp-subtitle {
-    font-size: 8px;
+    font-size: 7px;
     color: rgba(255, 255, 255, 0.85);
     margin: 0;
   }
@@ -658,7 +659,7 @@ a:hover {
   .bp-body {
     display: flex;
     flex: 1;
-    gap: 6px;
+    gap: 4px;
     min-height: 0;
   }
 
@@ -667,7 +668,7 @@ a:hover {
     flex: 1;
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 2px;
     min-width: 0;
     min-height: 0;
   }
@@ -692,12 +693,12 @@ a:hover {
   .bp-region-label {
     flex-shrink: 0;
     color: #f59e0b;
-    font-size: 8px;
+    font-size: 7px;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.06em;
     text-align: center;
-    margin: 0 0 2px 0;
+    margin: 0 0 1px 0;
   }
 
   /* ── Ladder: horizontal row of round columns ── */
@@ -720,7 +721,7 @@ a:hover {
     justify-content: space-around;
     min-width: 0;
     min-height: 0;
-    gap: 1px;
+    gap: 0;
   }
 
   /* ── Slot: white box with dark text ── */
@@ -729,28 +730,28 @@ a:hover {
     color: #111827 !important;
     border: 1px solid #94a3b8;
     border-radius: 2px;
-    padding: 3px 5px;
-    font-size: 9px;
-    line-height: 1.3;
+    padding: 2px 4px;
+    font-size: 8px;
+    line-height: 1.25;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
     display: flex;
     align-items: center;
-    gap: 3px;
-    min-height: 18px;
+    gap: 2px;
+    min-height: 15px;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
 
   .bp-seed {
     flex-shrink: 0;
-    width: 14px;
-    height: 14px;
+    width: 12px;
+    height: 12px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    font-size: 7px;
+    font-size: 6px;
     font-weight: 700;
     background: #e5e7eb !important;
     color: #374151 !important;
@@ -771,12 +772,12 @@ a:hover {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 6px;
+    gap: 3px;
     width: 100%;
   }
 
   .bp-center-label {
-    font-size: 7px;
+    font-size: 6.5px;
     font-weight: 700;
     color: #f59e0b;
     text-transform: uppercase;
@@ -788,13 +789,13 @@ a:hover {
     width: 100%;
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 2px;
   }
 
   .bp-center-game {
     display: flex;
     flex-direction: column;
-    gap: 1px;
+    gap: 0;
   }
 
   .bp-center .bp-slot {
@@ -804,11 +805,11 @@ a:hover {
   .bp-champion-label {
     background: #ffffff !important;
     color: #1e3a5f !important;
-    font-size: 9px;
+    font-size: 8px;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.06em;
-    padding: 3px 8px;
+    padding: 2px 6px;
     border-radius: 3px;
     border: 1px solid #94a3b8;
     text-align: center;
@@ -821,10 +822,10 @@ a:hover {
     color: #111827 !important;
     border: 1px solid #94a3b8;
     border-radius: 2px;
-    min-height: 22px;
+    min-height: 18px;
     width: 100%;
-    padding: 4px 6px;
-    font-size: 10px;
+    padding: 3px 4px;
+    font-size: 9px;
     font-weight: 600;
     text-align: center;
     display: flex;
@@ -836,9 +837,9 @@ a:hover {
 
   .bp-tiebreaker {
     color: rgba(255, 255, 255, 0.9);
-    font-size: 8px;
+    font-size: 7px;
     text-align: center;
-    margin-top: 2px;
+    margin-top: 1px;
   }
 }
 
