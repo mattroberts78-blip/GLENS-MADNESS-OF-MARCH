@@ -24,6 +24,9 @@ npm-debug.log*
 *.swp
 *.swo
 
+# Load test data (contains test credentials)
+load-test-users.json
+
 # OS
 .DS_Store
 Thumbs.db

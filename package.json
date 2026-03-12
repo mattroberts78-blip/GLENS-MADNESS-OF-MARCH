@@ -8,7 +8,9 @@
     "start": "next start",
     "lint": "next lint",
     "db:push": "tsx scripts/db-push.ts",
-    "db:seed": "tsx scripts/seed-credentials.ts"
+    "db:seed": "tsx scripts/seed-credentials.ts",
+    "load-test:seed": "tsx scripts/seed-load-test-users.ts",
+    "load-test": "k6 run load-test/k6.js"
   },
   "dependencies": {
     "@vercel/postgres": "^0.10.0",
