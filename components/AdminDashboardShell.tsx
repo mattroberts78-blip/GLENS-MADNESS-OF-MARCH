@@ -5,6 +5,7 @@ import { PaymentTable } from '@/components/PaymentTable';
 import { TeamsAdmin } from '@/components/TeamsAdmin';
 import { AdminResultsBracket } from '@/components/AdminResultsBracket';
 import { LockBracketsAdmin } from '@/components/LockBracketsAdmin';
+import { BracketsAdmin } from '@/components/BracketsAdmin';
 
 type Participant = {
   id: number;
@@ -19,18 +20,27 @@ type TeamRow = {
   name: string | null;
 };
 
-type SectionKey = 'participants' | 'lock' | 'teams' | 'results';
+type EntryRow = {
+  id: number;
+  name: string | null;
+  locked_at: string | null;
+  username: string;
+};
+
+type SectionKey = 'participants' | 'brackets' | 'lock' | 'teams' | 'results';
 
 export function AdminDashboardShell({
   username,
   adminToken,
   participants,
+  entries,
   teams,
   dbError,
 }: {
   username: string;
   adminToken: string;
   participants: Participant[];
+  entries: EntryRow[];
   teams: TeamRow[];
   dbError: string | null;
 }) {
@@ -56,6 +66,16 @@ export function AdminDashboardShell({
           <section className="card">
             <h2 className="card-title">Lock brackets</h2>
             <LockBracketsAdmin adminToken={adminToken} />
+          </section>
+        );
+      case 'brackets':
+        return (
+          <section className="card">
+            <h2 className="card-title">Brackets</h2>
+            <p className="page-subtitle">
+              View and delete individual brackets for any participant.
+            </p>
+            <BracketsAdmin entries={entries} adminToken={adminToken} />
           </section>
         );
       case 'teams':
@@ -130,6 +150,7 @@ export function AdminDashboardShell({
             Admin menu
           </h2>
           {navButton('participants', 'Participants')}
+          {navButton('brackets', 'Brackets')}
           {navButton('lock', 'Lock / unlock')}
           {navButton('teams', 'Tournament teams')}
           {navButton('results', 'Game results')}

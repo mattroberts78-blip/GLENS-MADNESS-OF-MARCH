@@ -29,6 +29,12 @@ export default async function AdminPage({
     payment_verified_at: string | null;
     entry_count: string;
   }[] = [];
+  let entries: {
+    id: number;
+    name: string | null;
+    locked_at: string | null;
+    username: string;
+  }[] = [];
   let dbError: string | null = null;
   let teams: {
     region: string;
@@ -46,6 +52,16 @@ export default async function AdminPage({
       LIMIT 100
     `;
     participants = participantsResult.rows as typeof participants;
+
+    const entriesResult = await sql`
+      SELECT e.id, e.name, e.locked_at, c.username
+      FROM entries e
+      JOIN credentials c ON e.credential_id = c.id
+      WHERE LOWER(TRIM(c.username)) <> 'admin'
+      ORDER BY e.created_at DESC
+      LIMIT 200
+    `;
+    entries = entriesResult.rows as typeof entries;
 
     const contestResult = await sql`
       SELECT id
@@ -73,6 +89,7 @@ export default async function AdminPage({
       username={username}
       adminToken={adminToken}
       participants={participants}
+      entries={entries}
       teams={teams}
       dbError={dbError}
     />
