@@ -83,7 +83,19 @@ export function AdminResultsBracket({
         return games.filter((g) => g.slot >= start && g.slot <= end);
       }
       if (round === 4) {
-        const slot = regionIndex + 1;
+        // Elite 8 winners are ordered specifically to drive the desired Final Four:
+        // slot 1: East champion
+        // slot 2: South champion
+        // slot 3: West champion
+        // slot 4: Midwest champion
+        const slot =
+          region === 'East'
+            ? 1
+            : region === 'South'
+            ? 2
+            : region === 'West'
+            ? 3
+            : 4;
         return games.filter((g) => g.slot === slot);
       }
       return [];
@@ -117,24 +129,8 @@ export function AdminResultsBracket({
   const getDerivedTeams = useCallback(
     (round: number, slot: number): { team1: string; team2: string; ready: boolean } => {
       const prevRound = round - 1;
-
-      // Custom Final Four pairing:
-      // - Semi 1: East vs South
-      // - Semi 2: West vs Midwest
-      let feeder1Slot = 2 * slot - 1;
-      let feeder2Slot = 2 * slot;
-      if (round === 5) {
-        if (slot === 1) {
-          feeder1Slot = 1; // East champion
-          feeder2Slot = 3; // South champion
-        } else if (slot === 2) {
-          feeder1Slot = 2; // West champion
-          feeder2Slot = 4; // Midwest champion
-        }
-      }
-
-      const t1 = getWinnerLabel(prevRound, feeder1Slot);
-      const t2 = getWinnerLabel(prevRound, feeder2Slot);
+      const t1 = getWinnerLabel(prevRound, 2 * slot - 1);
+      const t2 = getWinnerLabel(prevRound, 2 * slot);
       return {
         team1: t1 ?? '',
         team2: t2 ?? '',
