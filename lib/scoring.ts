@@ -20,6 +20,9 @@ const GAMES_BY_ID = new Map<string, BracketGame>(
 
 export type ResultsJson = Record<string, 0 | 1>;
 
+// Final Four feeder mapping: East(1) vs South(3), West(2) vs Midwest(4)
+const FF_FEEDERS: Record<number, [number, number]> = { 1: [1, 3], 2: [2, 4] };
+
 /** Get the seed of the winner of a game from results (for round 1 from teams, for 2+ from feeder winners). */
 function getWinnerSeed(gameId: string, results: ResultsJson): number | null {
   const game = GAMES_BY_ID.get(gameId);
@@ -29,8 +32,9 @@ function getWinnerSeed(gameId: string, results: ResultsJson): number | null {
   if (game.round === 1) {
     return pick === 0 ? game.team1.seed : game.team2.seed;
   }
-  const prevSlot1 = 2 * game.slot - 1;
-  const prevSlot2 = 2 * game.slot;
+  const feeders = game.round === 5 ? FF_FEEDERS[game.slot] : undefined;
+  const prevSlot1 = feeders ? feeders[0] : 2 * game.slot - 1;
+  const prevSlot2 = feeders ? feeders[1] : 2 * game.slot;
   const prevId1 = `r${game.round - 1}-${prevSlot1}`;
   const prevId2 = `r${game.round - 1}-${prevSlot2}`;
   const seed1 = getWinnerSeed(prevId1, results);

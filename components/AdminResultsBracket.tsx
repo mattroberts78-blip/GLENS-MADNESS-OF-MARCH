@@ -83,25 +83,16 @@ export function AdminResultsBracket({
         return games.filter((g) => g.slot >= start && g.slot <= end);
       }
       if (round === 4) {
-        // Elite 8 winners are ordered specifically to drive the desired Final Four:
-        // slot 1: East champion
-        // slot 2: South champion
-        // slot 3: West champion
-        // slot 4: Midwest champion
-        const slot =
-          region === 'East'
-            ? 1
-            : region === 'South'
-            ? 2
-            : region === 'West'
-            ? 3
-            : 4;
+        const slot = regionIndex + 1;
         return games.filter((g) => g.slot === slot);
       }
       return [];
     },
     [gamesByRound]
   );
+
+  // Final Four feeder mapping: East(1) vs South(3), West(2) vs Midwest(4)
+  const FF_FEEDERS: Record<number, [number, number]> = { 1: [1, 3], 2: [2, 4] };
 
   const getWinnerLabel = useCallback(
     (round: number, slot: number): string | null => {
@@ -119,9 +110,12 @@ export function AdminResultsBracket({
         const n2 = teamNameMap[key2] ?? game.team2.label;
         return result === 0 ? n1 : n2;
       }
+      const feeders = round === 5 ? FF_FEEDERS[slot] : undefined;
+      const feeder1 = feeders ? feeders[0] : 2 * slot - 1;
+      const feeder2 = feeders ? feeders[1] : 2 * slot;
       return result === 0
-        ? getWinnerLabel(round - 1, 2 * slot - 1)
-        : getWinnerLabel(round - 1, 2 * slot);
+        ? getWinnerLabel(round - 1, feeder1)
+        : getWinnerLabel(round - 1, feeder2);
     },
     [gamesByRound, results, teamNameMap]
   );
@@ -129,8 +123,11 @@ export function AdminResultsBracket({
   const getDerivedTeams = useCallback(
     (round: number, slot: number): { team1: string; team2: string; ready: boolean } => {
       const prevRound = round - 1;
-      const t1 = getWinnerLabel(prevRound, 2 * slot - 1);
-      const t2 = getWinnerLabel(prevRound, 2 * slot);
+      const feeders = round === 5 ? FF_FEEDERS[slot] : undefined;
+      const feeder1 = feeders ? feeders[0] : 2 * slot - 1;
+      const feeder2 = feeders ? feeders[1] : 2 * slot;
+      const t1 = getWinnerLabel(prevRound, feeder1);
+      const t2 = getWinnerLabel(prevRound, feeder2);
       return {
         team1: t1 ?? '',
         team2: t2 ?? '',
