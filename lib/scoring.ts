@@ -62,3 +62,34 @@ export function computeEntryScore(
   }
   return total;
 }
+
+/**
+ * Compute the maximum possible score an entry can still achieve, assuming
+ * every remaining undecided game breaks in favor of this entry's picks.
+ *
+ * Implementation detail:
+ * - Start from the actual contest results.
+ * - For any game that does NOT yet have a recorded result, if the entry
+ *   has a pick (0 or 1), assume that pick will be correct.
+ * - Reuse computeEntryScore with this hypothetical results map.
+ */
+export function computeEntryMaxScore(
+  picks: Record<string, 0 | 1> | null | undefined,
+  results: ResultsJson | null | undefined
+): number {
+  if (!picks || typeof picks !== 'object') return 0;
+
+  const base: ResultsJson =
+    results && typeof results === 'object' ? { ...(results as ResultsJson) } : {};
+
+  const hypothetical: ResultsJson = { ...base };
+  for (const [gameId, pick] of Object.entries(picks)) {
+    if (pick !== 0 && pick !== 1) continue;
+    const existing = hypothetical[gameId];
+    if (existing === 0 || existing === 1) continue; // already decided in real results
+    hypothetical[gameId] = pick;
+  }
+
+  return computeEntryScore(picks, hypothetical);
+}
+

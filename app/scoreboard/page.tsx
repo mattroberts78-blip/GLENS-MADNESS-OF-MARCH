@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { sql } from '@vercel/postgres';
 import { getSession } from '@/lib/auth/session';
-import { computeEntryScore } from '@/lib/scoring';
+import { computeEntryScore, computeEntryMaxScore } from '@/lib/scoring';
 import type { ResultsJson } from '@/lib/scoring';
 
 export const dynamic = 'force-dynamic';
@@ -49,6 +49,7 @@ export default async function ScoreboardPage() {
         FROM entries e
         JOIN credentials c ON c.id = e.credential_id
         WHERE LOWER(TRIM(c.username)) <> 'admin'
+          AND c.payment_verified_at IS NOT NULL
         ORDER BY c.id ASC, e.id ASC
       `;
       rows = entriesResult.rows as typeof rows;
@@ -58,13 +59,18 @@ export default async function ScoreboardPage() {
   }
 
   const results = (contest?.results_json as ResultsJson | null) ?? null;
-  const withScores = rows.map((r) => ({
-    ...r,
-    score: computeEntryScore(
-      r.picks_json as Record<string, 0 | 1> | null,
-      results
-    ),
-  }));
+  const withScores = rows.map((r) => {
+    const picks = r.picks_json as Record<string, 0 | 1> | null;
+    const score = computeEntryScore(picks, results);
+    const maxScore = computeEntryMaxScore(picks, results);
+    const remaining = Math.max(0, maxScore - score);
+    return {
+      ...r,
+      score,
+      maxScore,
+      remaining,
+    };
+  });
 
   // Build display name: "First Last 1", "First Last 2", etc. per credential
   let prevCredentialId: number | null = null;
@@ -108,7 +114,8 @@ export default async function ScoreboardPage() {
                 <th style={{ textAlign: 'left', padding: '0.5rem 0.75rem', borderBottom: '1px solid var(--border)' }}>Bracket</th>
                 <th style={{ textAlign: 'left', padding: '0.5rem 0.75rem', borderBottom: '1px solid var(--border)' }}>Participant</th>
                 <th style={{ textAlign: 'right', padding: '0.5rem 0.75rem', borderBottom: '1px solid var(--border)' }}>Points</th>
-                <th style={{ textAlign: 'left', padding: '0.5rem 0.75rem', borderBottom: '1px solid var(--border)' }}>Verified</th>
+                <th style={{ textAlign: 'right', padding: '0.5rem 0.75rem', borderBottom: '1px solid var(--border)' }}>Max</th>
+                <th style={{ textAlign: 'right', padding: '0.5rem 0.75rem', borderBottom: '1px solid var(--border)' }}>Remaining</th>
               </tr>
             </thead>
             <tbody>
@@ -117,9 +124,33 @@ export default async function ScoreboardPage() {
                   <td style={{ padding: '0.5rem 0.75rem', borderTop: '1px solid var(--border)' }}>{i + 1}</td>
                   <td style={{ padding: '0.5rem 0.75rem', borderTop: '1px solid var(--border)' }}>{r.entry_name ?? `Bracket ${r.entry_id}`}</td>
                   <td style={{ padding: '0.5rem 0.75rem', borderTop: '1px solid var(--border)' }}>{r.displayName}</td>
-                  <td style={{ textAlign: 'right', padding: '0.5rem 0.75rem', borderTop: '1px solid var(--border)', fontWeight: 600 }}>{r.score}</td>
-                  <td style={{ padding: '0.5rem 0.75rem', borderTop: '1px solid var(--border)' }}>
-                    {r.payment_verified_at ? <span style={{ color: 'var(--success)' }}>Yes</span> : <span style={{ color: 'var(--text-muted)' }}>No</span>}
+                  <td
+                    style={{
+                      textAlign: 'right',
+                      padding: '0.5rem 0.75rem',
+                      borderTop: '1px solid var(--border)',
+                      fontWeight: 600,
+                    }}
+                  >
+                    {r.score}
+                  </td>
+                  <td
+                    style={{
+                      textAlign: 'right',
+                      padding: '0.5rem 0.75rem',
+                      borderTop: '1px solid var(--border)',
+                    }}
+                  >
+                    {r.maxScore}
+                  </td>
+                  <td
+                    style={{
+                      textAlign: 'right',
+                      padding: '0.5rem 0.75rem',
+                      borderTop: '1px solid var(--border)',
+                    }}
+                  >
+                    {r.remaining}
                   </td>
                 </tr>
               ))}
