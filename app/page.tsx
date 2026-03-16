@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { sql } from '@vercel/postgres';
 import { getSession } from '@/lib/auth/session';
 import { DisplayNameForm } from '@/components/DisplayNameForm';
+import { AddBracketButton } from '@/components/AddBracketButton';
 
 export const dynamic = 'force-dynamic';
 
@@ -43,7 +44,8 @@ export default async function HomePage({
       <main className="page-container">
         <h1 className="page-title">Your brackets</h1>
         <p className="page-subtitle">
-          Logged in as <strong>{session.username}</strong>. You have {entries.length} bracket{entries.length === 1 ? '' : 's'} to fill out.
+          Logged in as <strong>{session.username}</strong>. You have {entries.length} bracket
+          {entries.length === 1 ? '' : 's'} to fill out.
         </p>
 
         {showNameForm && (
@@ -53,12 +55,15 @@ export default async function HomePage({
           />
         )}
 
+        {!bracketsLocked && <AddBracketButton />}
+
         <ul className="bracket-list">
           {entries.length === 0 ? (
             <li className="card" style={{ padding: '1.5rem', color: 'var(--text-muted)' }}>
               <strong style={{ color: 'var(--text)' }}>No brackets yet</strong>
               <p style={{ margin: '0.5rem 0 0 0', fontSize: '0.95rem' }}>
-                Your account doesn&apos;t have any brackets assigned. Contact the organizer to get your login and bracket(s) after you sign up.
+                You don&apos;t have any brackets yet. Click &quot;Add bracket&quot; above to create your
+                first one, as long as the tournament isn&apos;t locked.
               </p>
             </li>
           ) : (

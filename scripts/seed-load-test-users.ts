@@ -4,7 +4,10 @@
  *
  * Usage:
  *   npx tsx scripts/seed-load-test-users.ts [count]
- *   # default count = 120 (covers 100 VUs with headroom)
+ *   npx tsx scripts/seed-load-test-users.ts --recreate [count]
+ *
+ *   --recreate  Delete existing loadtest* users and their brackets, then create fresh ones.
+ *   count       Number of users (default 120, max 500).
  *
  * Requires: POSTGRES_URL in .env.local
  */
@@ -18,7 +21,11 @@ config({ path: join(process.cwd(), '.env.local') });
 config();
 
 const LOAD_TEST_PASSWORD = 'loadtest';
-const COUNT = Math.min(parseInt(process.argv[2] || '120', 10) || 120, 500);
+
+const args = process.argv.slice(2);
+const recreate = args[0] === '--recreate';
+const countArg = recreate ? args[1] : args[0];
+const COUNT = Math.min(parseInt(countArg || '120', 10) || 120, 500);
 
 if (!process.env.POSTGRES_URL) {
   console.error('Missing POSTGRES_URL. Add it to .env.local');
@@ -28,6 +35,19 @@ if (!process.env.POSTGRES_URL) {
 type UserRow = { username: string; password: string; entryId: number };
 
 async function main() {
+  if (recreate) {
+    console.log('Removing existing loadtest users and their brackets...');
+    await sql`
+      DELETE FROM entries
+      WHERE credential_id IN (SELECT id FROM credentials WHERE username LIKE 'loadtest%')
+    `;
+    const deletedCreds = await sql`
+      DELETE FROM credentials WHERE username LIKE 'loadtest%'
+    `;
+    const n = deletedCreds.rowCount ?? 0;
+    console.log(`Removed ${n} loadtest users and their entries.`);
+  }
+
   const users: UserRow[] = [];
 
   for (let i = 1; i <= COUNT; i++) {
@@ -60,7 +80,7 @@ async function main() {
 
   const outPath = join(process.cwd(), 'load-test-users.json');
   writeFileSync(outPath, JSON.stringify(users, null, 2), 'utf-8');
-  console.log(`Created ${users.length} load-test users with one entry each.`);
+  console.log(`Created ${users.length} load-test users with one bracket each.`);
   console.log(`Credentials written to ${outPath}`);
   console.log(`Use: k6 run load-test/k6.js (with BASE_URL env if needed)`);
 }

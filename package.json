@@ -10,6 +10,7 @@
     "db:push": "tsx scripts/db-push.ts",
     "db:seed": "tsx scripts/seed-credentials.ts",
     "load-test:seed": "tsx scripts/seed-load-test-users.ts",
+    "load-test:seed:recreate": "tsx scripts/seed-load-test-users.ts --recreate",
     "load-test": "k6 run load-test/k6.js"
   },
   "dependencies": {
