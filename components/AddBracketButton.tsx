@@ -10,6 +10,12 @@ export function AddBracketButton() {
 
   async function handleClick() {
     setError(null);
+
+    const confirmed = window.confirm(
+      'Add a new bracket to your account? This will create another entry for this contest.',
+    );
+    if (!confirmed) return;
+
     try {
       const res = await fetch('/api/entries', {
         method: 'POST',
@@ -30,10 +36,9 @@ export function AddBracketButton() {
         return;
       }
 
-      const data = (await res.json()) as { id: number };
-
       startTransition(() => {
-        router.push(`/brackets/${data.id}`);
+        // Refresh the page so the new bracket appears in the list immediately.
+        router.refresh();
       });
     } catch {
       setError('Something went wrong. Please try again.');
