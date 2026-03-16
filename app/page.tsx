@@ -3,6 +3,7 @@ import { sql } from '@vercel/postgres';
 import { getSession } from '@/lib/auth/session';
 import { DisplayNameForm } from '@/components/DisplayNameForm';
 import { AddBracketButton } from '@/components/AddBracketButton';
+import { DeleteBracketButton } from '@/components/DeleteBracketButton';
 
 export const dynamic = 'force-dynamic';
 
@@ -69,16 +70,19 @@ export default async function HomePage({
           ) : (
             entries.map((entry) => (
               <li key={entry.id}>
-                <a href={`/brackets/${entry.id}`} className="bracket-card">
-                  <strong>{entry.name}</strong>
-                  {entry.locked_at ? (
-                    <span className="badge badge-locked">Locked</span>
-                  ) : entry.picks_complete ? (
-                    <span className="badge badge-complete">Complete</span>
-                  ) : (
-                    <span className="badge badge-open">Not complete</span>
-                  )}
-                </a>
+                <div className="bracket-card">
+                  <a href={`/brackets/${entry.id}`} className="bracket-card__main">
+                    <strong>{entry.name}</strong>
+                    {entry.locked_at ? (
+                      <span className="badge badge-locked">Locked</span>
+                    ) : entry.picks_complete ? (
+                      <span className="badge badge-complete">Complete</span>
+                    ) : (
+                      <span className="badge badge-open">Not complete</span>
+                    )}
+                  </a>
+                  {!entry.locked_at && <DeleteBracketButton entryId={entry.id} disabled={false} />}
+                </div>
               </li>
             ))
           )}

@@ -138,8 +138,24 @@ export function BracketEntry({
   const getDerivedTeams = useCallback(
     (round: number, slot: number): { team1: string; team2: string; ready: boolean } => {
       const prevRound = round - 1;
-      const t1 = getWinnerLabel(prevRound, 2 * slot - 1);
-      const t2 = getWinnerLabel(prevRound, 2 * slot);
+
+      // Custom Final Four pairing:
+      // - Semi 1: East vs South
+      // - Semi 2: West vs Midwest
+      let feeder1Slot = 2 * slot - 1;
+      let feeder2Slot = 2 * slot;
+      if (round === 5) {
+        if (slot === 1) {
+          feeder1Slot = 1; // East champion
+          feeder2Slot = 3; // South champion
+        } else if (slot === 2) {
+          feeder1Slot = 2; // West champion
+          feeder2Slot = 4; // Midwest champion
+        }
+      }
+
+      const t1 = getWinnerLabel(prevRound, feeder1Slot);
+      const t2 = getWinnerLabel(prevRound, feeder2Slot);
       return {
         team1: t1 ?? '',
         team2: t2 ?? '',
@@ -557,11 +573,11 @@ export function BracketEntry({
           <div className="bp-subtitle">{entryName}</div>
         </div>
         <div className="bp-body">
-          {/* Left side: West (top) + South (bottom), rounds flow left→right */}
+          {/* Left side: East (top) + South (bottom), rounds flow left→right */}
           <div className="bp-side">
             <div className="bp-region">
-              <div className="bp-region-label">West</div>
-              {renderPrintRegionLadder('West')}
+              <div className="bp-region-label">East</div>
+              {renderPrintRegionLadder('East')}
             </div>
             <div className="bp-region">
               <div className="bp-region-label">South</div>
@@ -572,11 +588,11 @@ export function BracketEntry({
           <div className="bp-side bp-side--center">
             {renderPrintCenter()}
           </div>
-          {/* Right side: East (top) + Midwest (bottom), rounds flow right→left (mirrored) */}
+          {/* Right side: West (top) + Midwest (bottom), rounds flow right→left (mirrored) */}
           <div className="bp-side">
             <div className="bp-region">
-              <div className="bp-region-label">East</div>
-              {renderPrintRegionLadder('East', true)}
+              <div className="bp-region-label">West</div>
+              {renderPrintRegionLadder('West', true)}
             </div>
             <div className="bp-region">
               <div className="bp-region-label">Midwest</div>

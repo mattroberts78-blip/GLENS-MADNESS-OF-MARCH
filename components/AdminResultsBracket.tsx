@@ -117,8 +117,24 @@ export function AdminResultsBracket({
   const getDerivedTeams = useCallback(
     (round: number, slot: number): { team1: string; team2: string; ready: boolean } => {
       const prevRound = round - 1;
-      const t1 = getWinnerLabel(prevRound, 2 * slot - 1);
-      const t2 = getWinnerLabel(prevRound, 2 * slot);
+
+      // Custom Final Four pairing:
+      // - Semi 1: East vs South
+      // - Semi 2: West vs Midwest
+      let feeder1Slot = 2 * slot - 1;
+      let feeder2Slot = 2 * slot;
+      if (round === 5) {
+        if (slot === 1) {
+          feeder1Slot = 1; // East champion
+          feeder2Slot = 3; // South champion
+        } else if (slot === 2) {
+          feeder1Slot = 2; // West champion
+          feeder2Slot = 4; // Midwest champion
+        }
+      }
+
+      const t1 = getWinnerLabel(prevRound, feeder1Slot);
+      const t2 = getWinnerLabel(prevRound, feeder2Slot);
       return {
         team1: t1 ?? '',
         team2: t2 ?? '',
