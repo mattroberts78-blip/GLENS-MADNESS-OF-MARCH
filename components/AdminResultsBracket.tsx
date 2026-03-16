@@ -153,7 +153,14 @@ export function AdminResultsBracket({
 
   const setWinner = useCallback(
     (gameId: string, team: 0 | 1) => {
-      const next = { ...results, [gameId]: team };
+      const current = results[gameId];
+      const next: ResultsJson = { ...results };
+      // Clicking the already-selected winner clears the result so the admin can undo.
+      if (current === team) {
+        delete next[gameId];
+      } else {
+        next[gameId] = team;
+      }
       setResults(next);
       saveResults(next);
     },

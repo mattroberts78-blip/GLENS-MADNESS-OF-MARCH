@@ -151,7 +151,16 @@ export function BracketEntry({
 
   const pick = (gameId: string, team: 0 | 1) => {
     if (locked) return;
-    setPicks((prev) => ({ ...prev, [gameId]: team }));
+    setPicks((prev) => {
+      const current = prev[gameId];
+      // Clicking the already-selected team clears the pick so the user can undo.
+      if (current === team) {
+        const next = { ...prev };
+        delete next[gameId];
+        return next;
+      }
+      return { ...prev, [gameId]: team };
+    });
   };
 
   const pickedCount = Object.keys(picks).length;
