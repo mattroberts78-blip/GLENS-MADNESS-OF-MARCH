@@ -469,6 +469,12 @@ a:hover {
   color: var(--bg);
 }
 
+.bracket-team--eliminated {
+  opacity: 0.5;
+  text-decoration: line-through;
+  border-color: rgba(148, 163, 184, 0.7);
+}
+
 .bracket-team--tbd {
   opacity: 0.75;
   cursor: not-allowed;

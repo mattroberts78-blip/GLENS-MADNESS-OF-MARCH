@@ -3,6 +3,7 @@ import { sql } from '@vercel/postgres';
 import { getSession } from '@/lib/auth/session';
 import { computeEntryScore, computeEntryMaxScore } from '@/lib/scoring';
 import type { ResultsJson } from '@/lib/scoring';
+import { DEMO_BRACKET_GAMES, ROUND_LABELS } from '@/lib/bracket-demo-data';
 
 export const dynamic = 'force-dynamic';
 
@@ -91,6 +92,53 @@ export default async function ScoreboardPage() {
 
   withDisplayName.sort((a, b) => b.score - a.score);
 
+  // Determine the "current round" as the highest round number that has at least one decided game.
+  const currentRound = (() => {
+    if (!results || typeof results !== 'object') return 1;
+    let maxRound = 0;
+    const games = DEMO_BRACKET_GAMES ?? [];
+    const byId = new Map(games.map((g) => [g.id, g]));
+    for (const [gameId, winner] of Object.entries(results)) {
+      if (winner !== 0 && winner !== 1) continue;
+      const game = byId.get(gameId);
+      if (game && game.round > maxRound) {
+        maxRound = game.round;
+      }
+    }
+    return maxRound || 1;
+  })();
+
+  // For the current round, compute what percentage of entries picked each team for each game.
+  const pickDistribution = (() => {
+    const games = (DEMO_BRACKET_GAMES ?? []).filter((g) => g.round === currentRound);
+    const totalEntries = withDisplayName.length;
+    if (totalEntries === 0 || games.length === 0) return [];
+
+    return games.map((game) => {
+      let team1Count = 0;
+      let team2Count = 0;
+
+      for (const r of withDisplayName) {
+        const picks = r.picks_json as Record<string, 0 | 1> | null;
+        const pick = picks?.[game.id];
+        if (pick === 0) team1Count += 1;
+        else if (pick === 1) team2Count += 1;
+      }
+
+      const toPct = (count: number) =>
+        totalEntries === 0 ? 0 : Math.round((count / totalEntries) * 1000) / 10; // one decimal
+
+      return {
+        id: game.id,
+        label: `${game.region} ${game.team1.seed} vs ${game.team2.seed}`,
+        team1Label: game.team1.label,
+        team2Label: game.team2.label,
+        team1Pct: toPct(team1Count),
+        team2Pct: toPct(team2Count),
+      };
+    });
+  })();
+
   return (
     <main className="page-container">
       <p style={{ marginBottom: '1rem' }}>
@@ -106,57 +154,115 @@ export default async function ScoreboardPage() {
       {withDisplayName.length === 0 ? (
         <p style={{ color: 'var(--text-muted)' }}>No entries yet.</p>
       ) : (
-        <section className="card">
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.95rem' }}>
-            <thead>
-              <tr>
-                <th style={{ textAlign: 'left', padding: '0.5rem 0.75rem', borderBottom: '1px solid var(--border)' }}>#</th>
-                <th style={{ textAlign: 'left', padding: '0.5rem 0.75rem', borderBottom: '1px solid var(--border)' }}>Bracket</th>
-                <th style={{ textAlign: 'left', padding: '0.5rem 0.75rem', borderBottom: '1px solid var(--border)' }}>Participant</th>
-                <th style={{ textAlign: 'right', padding: '0.5rem 0.75rem', borderBottom: '1px solid var(--border)' }}>Points</th>
-                <th style={{ textAlign: 'right', padding: '0.5rem 0.75rem', borderBottom: '1px solid var(--border)' }}>Max</th>
-                <th style={{ textAlign: 'right', padding: '0.5rem 0.75rem', borderBottom: '1px solid var(--border)' }}>Remaining</th>
-              </tr>
-            </thead>
-            <tbody>
-              {withDisplayName.map((r, i) => (
-                <tr key={r.entry_id}>
-                  <td style={{ padding: '0.5rem 0.75rem', borderTop: '1px solid var(--border)' }}>{i + 1}</td>
-                  <td style={{ padding: '0.5rem 0.75rem', borderTop: '1px solid var(--border)' }}>{r.entry_name ?? `Bracket ${r.entry_id}`}</td>
-                  <td style={{ padding: '0.5rem 0.75rem', borderTop: '1px solid var(--border)' }}>{r.displayName}</td>
-                  <td
-                    style={{
-                      textAlign: 'right',
-                      padding: '0.5rem 0.75rem',
-                      borderTop: '1px solid var(--border)',
-                      fontWeight: 600,
-                    }}
-                  >
-                    {r.score}
-                  </td>
-                  <td
-                    style={{
-                      textAlign: 'right',
-                      padding: '0.5rem 0.75rem',
-                      borderTop: '1px solid var(--border)',
-                    }}
-                  >
-                    {r.maxScore}
-                  </td>
-                  <td
-                    style={{
-                      textAlign: 'right',
-                      padding: '0.5rem 0.75rem',
-                      borderTop: '1px solid var(--border)',
-                    }}
-                  >
-                    {r.remaining}
-                  </td>
+        <>
+          <section className="card">
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.95rem' }}>
+              <thead>
+                <tr>
+                  <th style={{ textAlign: 'left', padding: '0.5rem 0.75rem', borderBottom: '1px solid var(--border)' }}>#</th>
+                  <th style={{ textAlign: 'left', padding: '0.5rem 0.75rem', borderBottom: '1px solid var(--border)' }}>Bracket</th>
+                  <th style={{ textAlign: 'left', padding: '0.5rem 0.75rem', borderBottom: '1px solid var(--border)' }}>Participant</th>
+                  <th style={{ textAlign: 'right', padding: '0.5rem 0.75rem', borderBottom: '1px solid var(--border)' }}>Points</th>
+                  <th style={{ textAlign: 'right', padding: '0.5rem 0.75rem', borderBottom: '1px solid var(--border)' }}>Max</th>
+                  <th style={{ textAlign: 'right', padding: '0.5rem 0.75rem', borderBottom: '1px solid var(--border)' }}>Remaining</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </section>
+              </thead>
+              <tbody>
+                {withDisplayName.map((r, i) => (
+                  <tr key={r.entry_id}>
+                    <td style={{ padding: '0.5rem 0.75rem', borderTop: '1px solid var(--border)' }}>{i + 1}</td>
+                    <td style={{ padding: '0.5rem 0.75rem', borderTop: '1px solid var(--border)' }}>{r.entry_name ?? `Bracket ${r.entry_id}`}</td>
+                    <td style={{ padding: '0.5rem 0.75rem', borderTop: '1px solid var(--border)' }}>{r.displayName}</td>
+                    <td
+                      style={{
+                        textAlign: 'right',
+                        padding: '0.5rem 0.75rem',
+                        borderTop: '1px solid var(--border)',
+                        fontWeight: 600,
+                      }}
+                    >
+                      {r.score}
+                    </td>
+                    <td
+                      style={{
+                        textAlign: 'right',
+                        padding: '0.5rem 0.75rem',
+                        borderTop: '1px solid var(--border)',
+                      }}
+                    >
+                      {r.maxScore}
+                    </td>
+                    <td
+                      style={{
+                        textAlign: 'right',
+                        padding: '0.5rem 0.75rem',
+                        borderTop: '1px solid var(--border)',
+                      }}
+                    >
+                      {r.remaining}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </section>
+
+          {pickDistribution.length > 0 && (
+            <section className="card" style={{ marginTop: '1.5rem' }}>
+              <h2 className="card-title">
+                Pick distribution — {ROUND_LABELS[currentRound] ?? `Round ${currentRound}`}
+              </h2>
+              <p className="page-subtitle" style={{ marginBottom: '0.75rem' }}>
+                Shows what percentage of all verified entries picked each team in this round.
+              </p>
+              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
+                <thead>
+                  <tr>
+                    <th style={{ textAlign: 'left', padding: '0.5rem 0.75rem', borderBottom: '1px solid var(--border)' }}>
+                      Matchup
+                    </th>
+                    <th style={{ textAlign: 'right', padding: '0.5rem 0.75rem', borderBottom: '1px solid var(--border)' }}>
+                      {`% picked team 1`}
+                    </th>
+                    <th style={{ textAlign: 'right', padding: '0.5rem 0.75rem', borderBottom: '1px solid var(--border)' }}>
+                      {`% picked team 2`}
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {pickDistribution.map((g) => (
+                    <tr key={g.id}>
+                      <td style={{ padding: '0.5rem 0.75rem', borderTop: '1px solid var(--border)' }}>
+                        {g.label}
+                        <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                          {g.team1Label} vs {g.team2Label}
+                        </div>
+                      </td>
+                      <td
+                        style={{
+                          padding: '0.5rem 0.75rem',
+                          borderTop: '1px solid var(--border)',
+                          textAlign: 'right',
+                        }}
+                      >
+                        {g.team1Pct.toFixed(1)}%
+                      </td>
+                      <td
+                        style={{
+                          padding: '0.5rem 0.75rem',
+                          borderTop: '1px solid var(--border)',
+                          textAlign: 'right',
+                        }}
+                      >
+                        {g.team2Pct.toFixed(1)}%
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </section>
+          )}
+        </>
       )}
     </main>
   );

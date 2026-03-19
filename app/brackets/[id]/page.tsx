@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import { sql } from '@vercel/postgres';
 import { getSession } from '@/lib/auth/session';
 import { BracketEntry } from '@/components/BracketEntry';
+import type { ResultsJson } from '@/lib/scoring';
 
 export const dynamic = 'force-dynamic';
 
@@ -46,7 +47,7 @@ export default async function BracketPage({
   }
 
   const contestResult = await sql`
-    SELECT id
+    SELECT id, results_json
     FROM contests
     ORDER BY created_at DESC
     LIMIT 1
@@ -59,9 +60,12 @@ export default async function BracketPage({
         name: string | null;
       }[]
     | undefined;
+  let results: ResultsJson | null = null;
 
   if (contestResult.rowCount && contestResult.rows[0]) {
-    const contestId = (contestResult.rows[0] as { id: number }).id;
+    const contestRow = contestResult.rows[0] as { id: number; results_json: unknown };
+    const contestId = contestRow.id;
+    results = (contestRow.results_json as ResultsJson | null) ?? null;
     const teamsResult = await sql`
       SELECT region, seed, name
       FROM teams
@@ -87,6 +91,7 @@ export default async function BracketPage({
         initialPicks={(entry.picks_json as Record<string, 0 | 1> | null) ?? undefined}
         initialChampionshipTotal={entry.championship_total ?? undefined}
         teams={teams}
+        results={results ?? undefined}
       />
     </main>
   );

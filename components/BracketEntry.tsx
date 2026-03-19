@@ -6,6 +6,7 @@ import {
   ROUND_LABELS,
   type BracketGame,
 } from '@/lib/bracket-demo-data';
+import type { ResultsJson } from '@/lib/scoring';
 
 type Picks = Record<string, 0 | 1>;
 
@@ -33,6 +34,7 @@ export function BracketEntry({
   initialPicks?: Picks;
   initialChampionshipTotal?: number;
   teams?: TeamRow[];
+  results?: ResultsJson;
 }) {
   const [picks, setPicks] = useState<Picks>(initialPicks ?? {});
   const [championshipTotal, setChampionshipTotal] = useState(
@@ -199,7 +201,7 @@ export function BracketEntry({
       });
   };
 
-  const renderRegionBracket = (region: Region) => (
+  const renderRegionBracket = (region: Region, results?: ResultsJson) => (
     <div className="bracket-layout bracket-layout--print-region">
       {([1, 2, 3, 4] as const).map((round) => (
         <section key={round} className="bracket-round">
@@ -216,6 +218,10 @@ export function BracketEntry({
               const team2Label = isRound1 ? dbTeam2 || game.team2.label : (derived?.team2 ?? '');
               const canPick = isRound1 || (derived?.ready ?? false);
               const gameDisabled = locked || !canPick;
+              const resWinner = results?.[game.id];
+              const isDecided = resWinner === 0 || resWinner === 1;
+              const team1Eliminated = isDecided && resWinner === 1;
+              const team2Eliminated = isDecided && resWinner === 0;
 
               return (
                 <div key={game.id} className="bracket-game">
@@ -225,7 +231,7 @@ export function BracketEntry({
                     disabled={gameDisabled}
                     className={`bracket-team ${picks[game.id] === 0 ? 'bracket-team--picked' : ''}${
                       !canPick ? ' bracket-team--tbd' : ''
-                    }`}
+                    }${team1Eliminated ? ' bracket-team--eliminated' : ''}`}
                   >
                     {isRound1 && game.team1.seed > 0 && (
                       <span className="bracket-team__seed">{game.team1.seed}</span>
@@ -239,7 +245,7 @@ export function BracketEntry({
                     disabled={gameDisabled}
                     className={`bracket-team ${picks[game.id] === 1 ? 'bracket-team--picked' : ''}${
                       !canPick ? ' bracket-team--tbd' : ''
-                    }`}
+                    }${team2Eliminated ? ' bracket-team--eliminated' : ''}`}
                   >
                     {isRound1 && game.team2.seed > 0 && (
                       <span className="bracket-team__seed">{game.team2.seed}</span>
@@ -255,7 +261,7 @@ export function BracketEntry({
     </div>
   );
 
-  const renderFinalFourBracket = () => (
+  const renderFinalFourBracket = (results?: ResultsJson) => (
     <div className="bracket-layout bracket-layout--print-final">
       {([5, 6] as const).map((round) => (
         <section
@@ -270,6 +276,10 @@ export function BracketEntry({
               const team2Label = derived.team2;
               const canPick = derived.ready;
               const gameDisabled = locked || !canPick;
+              const resWinner = results?.[game.id];
+              const isDecided = resWinner === 0 || resWinner === 1;
+              const team1Eliminated = isDecided && resWinner === 1;
+              const team2Eliminated = isDecided && resWinner === 0;
 
               return (
                 <div key={game.id} className="bracket-game">
@@ -279,7 +289,7 @@ export function BracketEntry({
                     disabled={gameDisabled}
                     className={`bracket-team ${picks[game.id] === 0 ? 'bracket-team--picked' : ''}${
                       !canPick ? ' bracket-team--tbd' : ''
-                    }`}
+                    }${team1Eliminated ? ' bracket-team--eliminated' : ''}`}
                   >
                     <span className="bracket-team__label">{team1Label}</span>
                   </button>
@@ -290,7 +300,7 @@ export function BracketEntry({
                     disabled={gameDisabled}
                     className={`bracket-team ${picks[game.id] === 1 ? 'bracket-team--picked' : ''}${
                       !canPick ? ' bracket-team--tbd' : ''
-                    }`}
+                    }${team2Eliminated ? ' bracket-team--eliminated' : ''}`}
                   >
                     <span className="bracket-team__label">{team2Label}</span>
                   </button>
@@ -438,6 +448,10 @@ export function BracketEntry({
                   const team2Label = derived.team2;
                   const canPick = derived.ready;
                   const gameDisabled = locked || !canPick;
+                  const resWinner = results?.[game.id];
+                  const isDecided = resWinner === 0 || resWinner === 1;
+                  const team1Eliminated = isDecided && resWinner === 1;
+                  const team2Eliminated = isDecided && resWinner === 0;
 
                   return (
                     <div key={game.id} className="bracket-game">
@@ -445,7 +459,7 @@ export function BracketEntry({
                         type="button"
                         onClick={() => pick(game.id, 0)}
                         disabled={gameDisabled}
-                        className={`bracket-team ${picks[game.id] === 0 ? 'bracket-team--picked' : ''}${!canPick ? ' bracket-team--tbd' : ''}`}
+                        className={`bracket-team ${picks[game.id] === 0 ? 'bracket-team--picked' : ''}${!canPick ? ' bracket-team--tbd' : ''}${team1Eliminated ? ' bracket-team--eliminated' : ''}`}
                         title={canPick ? `Pick ${team1Label}` : undefined}
                       >
                         <span className="bracket-team__label">{team1Label}</span>
@@ -455,7 +469,7 @@ export function BracketEntry({
                         type="button"
                         onClick={() => pick(game.id, 1)}
                         disabled={gameDisabled}
-                        className={`bracket-team ${picks[game.id] === 1 ? 'bracket-team--picked' : ''}${!canPick ? ' bracket-team--tbd' : ''}`}
+                        className={`bracket-team ${picks[game.id] === 1 ? 'bracket-team--picked' : ''}${!canPick ? ' bracket-team--tbd' : ''}${team2Eliminated ? ' bracket-team--eliminated' : ''}`}
                         title={canPick ? `Pick ${team2Label}` : undefined}
                       >
                         <span className="bracket-team__label">{team2Label}</span>
@@ -484,6 +498,10 @@ export function BracketEntry({
                   const team2Label = isRound1 ? dbTeam2 || game.team2.label : (derived?.team2 ?? '');
                   const canPick = isRound1 || (derived?.ready ?? false);
                   const gameDisabled = locked || !canPick;
+                  const resWinner = results?.[game.id];
+                  const isDecided = resWinner === 0 || resWinner === 1;
+                  const team1Eliminated = isDecided && resWinner === 1;
+                  const team2Eliminated = isDecided && resWinner === 0;
 
                   return (
                     <div key={game.id} className="bracket-game">
@@ -491,7 +509,7 @@ export function BracketEntry({
                         type="button"
                         onClick={() => pick(game.id, 0)}
                         disabled={gameDisabled}
-                        className={`bracket-team ${picks[game.id] === 0 ? 'bracket-team--picked' : ''}${!canPick ? ' bracket-team--tbd' : ''}`}
+                    className={`bracket-team ${picks[game.id] === 0 ? 'bracket-team--picked' : ''}${!canPick ? ' bracket-team--tbd' : ''}${team1Eliminated ? ' bracket-team--eliminated' : ''}`}
                         title={canPick ? `Pick ${team1Label}` : undefined}
                       >
                         {isRound1 && game.team1.seed > 0 && (
@@ -504,7 +522,7 @@ export function BracketEntry({
                         type="button"
                         onClick={() => pick(game.id, 1)}
                         disabled={gameDisabled}
-                        className={`bracket-team ${picks[game.id] === 1 ? 'bracket-team--picked' : ''}${!canPick ? ' bracket-team--tbd' : ''}`}
+                    className={`bracket-team ${picks[game.id] === 1 ? 'bracket-team--picked' : ''}${!canPick ? ' bracket-team--tbd' : ''}${team2Eliminated ? ' bracket-team--eliminated' : ''}`}
                         title={canPick ? `Pick ${team2Label}` : undefined}
                       >
                         {isRound1 && game.team2.seed > 0 && (
