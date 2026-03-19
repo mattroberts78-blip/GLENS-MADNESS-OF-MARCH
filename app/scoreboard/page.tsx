@@ -130,7 +130,7 @@ export default async function ScoreboardPage() {
 
       return {
         id: game.id,
-        label: `${game.region} ${game.team1.seed} vs ${game.team2.seed}`,
+        label: `${ROUND_LABELS[game.round] ?? `Round ${game.round}`} · Game ${game.slot}`,
         team1Label: game.team1.label,
         team2Label: game.team2.label,
         team1Pct: toPct(team1Count),
