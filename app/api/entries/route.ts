@@ -9,30 +9,19 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  // Find the most recent contest to respect its bracket lock time.
-  const contestResult = await sql`
-    SELECT id, bracket_lock_at
-    FROM contests
-    ORDER BY created_at DESC
-    LIMIT 1
+  // Prevent creating new brackets once the admin has locked the tournament.
+  // The lock-brackets admin endpoint sets locked_at on all existing entries.
+  const lockCheckResult = await sql`
+    SELECT EXISTS (
+      SELECT 1 FROM entries WHERE locked_at IS NOT NULL
+    ) AS any_locked
   `;
 
-  if (!contestResult.rowCount) {
-    return NextResponse.json(
-      { error: 'No active contest is configured.' },
-      { status: 400 },
-    );
-  }
+  const anyLocked =
+    (lockCheckResult.rows[0] as { any_locked: boolean } | undefined)
+      ?.any_locked ?? false;
 
-  const contest = contestResult.rows[0] as {
-    id: number;
-    bracket_lock_at: string;
-  };
-
-  const lockTime = new Date(contest.bracket_lock_at);
-  const now = new Date();
-
-  if (Number.isNaN(lockTime.getTime()) || now >= lockTime) {
+  if (anyLocked) {
     return NextResponse.json(
       { error: 'Bracket creation is closed for this contest.' },
       { status: 400 },
