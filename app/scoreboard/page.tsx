@@ -382,7 +382,7 @@ export default async function ScoreboardPage({
         set.add(g.team2.label);
       }
     }
-    return [...set].sort((a, b) => a.localeCompare(b));
+    return Array.from(set).sort((a, b) => a.localeCompare(b));
   })();
 
   const teamRoundRows = (() => {
