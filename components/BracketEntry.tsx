@@ -27,6 +27,7 @@ export function BracketEntry({
   initialPicks,
   initialChampionshipTotal,
   teams,
+  results,
 }: {
   entryName: string;
   entryId: number;
