@@ -14,6 +14,8 @@ type StandingsRow = {
 
 type PrevRankMap = Record<number, number>;
 type FinishMap = Record<number, { best: number; worst: number }>;
+type SortKey = "points" | "max" | "remaining" | "risk";
+type SortDir = "asc" | "desc";
 
 function ordinal(n: number): string {
   const s = ["th", "st", "nd", "rd"];
@@ -42,18 +44,31 @@ export function ScoreboardStandings({
   prevRankMap: PrevRankMap;
   finishMap: FinishMap;
 }) {
-  const [modalOpen, setModalOpen] = useState(false);
   const [showAll, setShowAll] = useState(false);
   const [query, setQuery] = useState("");
+  const [sortKey, setSortKey] = useState<SortKey>("points");
+  const [sortDir, setSortDir] = useState<SortDir>("desc");
+
+  const sortedRows = useMemo(() => {
+    const clone = [...rows];
+    clone.sort((a, b) => {
+      const dir = sortDir === "asc" ? 1 : -1;
+      if (sortKey === "max") return (a.maxScore - b.maxScore) * dir;
+      if (sortKey === "remaining") return (a.remaining - b.remaining) * dir;
+      if (sortKey === "risk") return (a.riskPercentile - b.riskPercentile) * dir;
+      return (a.score - b.score) * dir;
+    });
+    return clone;
+  }, [rows, sortDir, sortKey]);
 
   const filteredRows = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return rows;
-    return rows.filter((r) => r.displayName.toLowerCase().includes(q));
-  }, [rows, query]);
+    if (!q) return sortedRows;
+    return sortedRows.filter((r) => r.displayName.toLowerCase().includes(q));
+  }, [sortedRows, query]);
 
-  const modalRows = showAll ? filteredRows : filteredRows.slice(0, 10);
-  const rankMap = useMemo(() => new Map(rows.map((r, i) => [r.entry_id, i + 1])), [rows]);
+  const visibleRows = showAll ? filteredRows : filteredRows.slice(0, 10);
+  const rankMap = useMemo(() => new Map(sortedRows.map((r, i) => [r.entry_id, i + 1])), [sortedRows]);
 
   const thStyle = {
     textAlign: "right" as const,
@@ -66,6 +81,18 @@ export function ScoreboardStandings({
     borderTop: "1px solid var(--border)",
   };
   const tdRight = { ...tdStyle, textAlign: "right" as const, fontVariantNumeric: "tabular-nums" as const };
+
+  const onSort = (key: SortKey) => {
+    if (sortKey === key) {
+      setSortDir((d) => (d === "desc" ? "asc" : "desc"));
+      return;
+    }
+    setSortKey(key);
+    setSortDir("desc");
+  };
+
+  const sortLabel = (key: SortKey, label: string) =>
+    `${label}${sortKey === key ? (sortDir === "desc" ? " ▼" : " ▲") : ""}`;
 
   const renderRows = (data: StandingsRow[]) => (
     <>
@@ -105,18 +132,36 @@ export function ScoreboardStandings({
   return (
     <>
       <section className="card" style={{ marginBottom: "0.75rem" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "0.5rem", flexWrap: "wrap" }}>
-          <p className="page-subtitle" style={{ margin: 0, fontSize: "0.78rem" }}>
-            Showing top 10 brackets. Open modal to search or expand.
-          </p>
+        <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", flexWrap: "wrap" }}>
+          <input
+            type="search"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Search bracket name"
+            aria-label="Search bracket name"
+            style={{
+              minWidth: 240,
+              background: "var(--panel)",
+              color: "var(--text)",
+              border: "1px solid var(--border)",
+              borderRadius: 8,
+              padding: "0.45rem 0.6rem",
+            }}
+          />
           <button
             type="button"
             className="nav-link"
-            onClick={() => setModalOpen(true)}
+            onClick={() => setShowAll((v) => !v)}
             style={{ border: "1px solid var(--border)", borderRadius: 8, padding: "0.35rem 0.6rem", background: "transparent" }}
           >
-            Open standings modal
+            {showAll ? "Show top 10" : "Show all"}
           </button>
+        </div>
+        <div style={{ marginTop: "0.5rem" }}>
+          <p className="page-subtitle" style={{ margin: 0, fontSize: "0.78rem" }}>
+            Showing {visibleRows.length} of {filteredRows.length} matching brackets
+            {!showAll && filteredRows.length > 10 ? " (top 10 by current sort)." : "."}
+          </p>
         </div>
       </section>
 
@@ -127,115 +172,47 @@ export function ScoreboardStandings({
               <th style={{ ...thStyle, textAlign: "center", width: 28 }} title="Rank change">&nbsp;</th>
               <th style={{ ...thStyle, textAlign: "center", width: 28 }}>#</th>
               <th style={{ ...thStyle, textAlign: "left" }}>Bracket</th>
-              <th style={thStyle}>Pts</th>
+              <th style={thStyle}>
+                <button type="button" className="nav-link nav-link-muted" onClick={() => onSort("points")}>
+                  {sortLabel("points", "Pts")}
+                </button>
+              </th>
               {roundsWithResults.map((rnd) => (
                 <th key={rnd} className="sb-hide-mobile" style={{ ...thStyle, fontSize: "0.7rem", color: "var(--text-muted)" }}>
                   R{rnd}
                 </th>
               ))}
-              <th style={thStyle}>Max</th>
-              <th style={thStyle}>Rem</th>
-              <th style={thStyle}>Risk%</th>
+              <th style={thStyle}>
+                <button type="button" className="nav-link nav-link-muted" onClick={() => onSort("max")}>
+                  {sortLabel("max", "Max")}
+                </button>
+              </th>
+              <th style={thStyle}>
+                <button type="button" className="nav-link nav-link-muted" onClick={() => onSort("remaining")}>
+                  {sortLabel("remaining", "Rem")}
+                </button>
+              </th>
+              <th style={thStyle}>
+                <button type="button" className="nav-link nav-link-muted" onClick={() => onSort("risk")}>
+                  {sortLabel("risk", "Risk%")}
+                </button>
+              </th>
               <th className="sb-hide-mobile" style={{ ...thStyle, fontSize: "0.75rem" }}>Range</th>
             </tr>
           </thead>
-          <tbody>{renderRows(rows.slice(0, 10))}</tbody>
+          <tbody>
+            {visibleRows.length > 0 ? (
+              renderRows(visibleRows)
+            ) : (
+              <tr>
+                <td colSpan={8 + roundsWithResults.length} style={{ ...tdStyle, textAlign: "center", color: "var(--text-muted)" }}>
+                  No brackets match your search.
+                </td>
+              </tr>
+            )}
+          </tbody>
         </table>
       </section>
-
-      {modalOpen && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          onClick={() => setModalOpen(false)}
-          style={{
-            position: "fixed",
-            inset: 0,
-            background: "rgba(0,0,0,0.6)",
-            zIndex: 1000,
-            display: "grid",
-            placeItems: "center",
-            padding: "1rem",
-          }}
-        >
-          <div
-            className="card"
-            onClick={(e) => e.stopPropagation()}
-            style={{ width: "min(1200px, 96vw)", maxHeight: "90vh", overflow: "auto" }}
-          >
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "0.75rem", marginBottom: "0.75rem", flexWrap: "wrap" }}>
-              <strong>Standings Explorer</strong>
-              <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", flexWrap: "wrap" }}>
-                <input
-                  type="search"
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Search bracket name"
-                  aria-label="Search bracket name"
-                  style={{
-                    minWidth: 240,
-                    background: "var(--panel)",
-                    color: "var(--text)",
-                    border: "1px solid var(--border)",
-                    borderRadius: 8,
-                    padding: "0.45rem 0.6rem",
-                  }}
-                />
-                <button
-                  type="button"
-                  className="nav-link"
-                  onClick={() => setShowAll((v) => !v)}
-                  style={{ border: "1px solid var(--border)", borderRadius: 8, padding: "0.35rem 0.6rem", background: "transparent" }}
-                >
-                  {showAll ? "Show top 10" : "Show all"}
-                </button>
-                <button
-                  type="button"
-                  className="nav-link"
-                  onClick={() => setModalOpen(false)}
-                  style={{ border: "1px solid var(--border)", borderRadius: 8, padding: "0.35rem 0.6rem", background: "transparent" }}
-                >
-                  Close
-                </button>
-              </div>
-            </div>
-            <p className="page-subtitle" style={{ marginTop: 0, marginBottom: "0.75rem", fontSize: "0.78rem" }}>
-              Showing {modalRows.length} of {filteredRows.length} matching brackets
-              {!showAll && filteredRows.length > 10 ? " (top 10 by current sort)" : ""}.
-            </p>
-            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.85rem" }}>
-              <thead>
-                <tr>
-                  <th style={{ ...thStyle, textAlign: "center", width: 28 }} title="Rank change">&nbsp;</th>
-                  <th style={{ ...thStyle, textAlign: "center", width: 28 }}>#</th>
-                  <th style={{ ...thStyle, textAlign: "left" }}>Bracket</th>
-                  <th style={thStyle}>Pts</th>
-                  {roundsWithResults.map((rnd) => (
-                    <th key={rnd} className="sb-hide-mobile" style={{ ...thStyle, fontSize: "0.7rem", color: "var(--text-muted)" }}>
-                      R{rnd}
-                    </th>
-                  ))}
-                  <th style={thStyle}>Max</th>
-                  <th style={thStyle}>Rem</th>
-                  <th style={thStyle}>Risk%</th>
-                  <th className="sb-hide-mobile" style={{ ...thStyle, fontSize: "0.75rem" }}>Range</th>
-                </tr>
-              </thead>
-              <tbody>
-                {modalRows.length > 0 ? (
-                  renderRows(modalRows)
-                ) : (
-                  <tr>
-                    <td colSpan={8 + roundsWithResults.length} style={{ ...tdStyle, textAlign: "center", color: "var(--text-muted)" }}>
-                      No brackets match your search.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
     </>
   );
 }
