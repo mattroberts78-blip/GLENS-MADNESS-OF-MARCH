@@ -221,36 +221,36 @@ export default async function ScoreboardPage({
                   <th style={{ textAlign: 'left', padding: '0.5rem 0.75rem', borderBottom: '1px solid var(--border)' }}>Participant</th>
                 <th style={{ textAlign: 'right', padding: '0.5rem 0.75rem', borderBottom: '1px solid var(--border)' }}>
                   <Link
-                    href={`/?${new URLSearchParams({
+                    href={`/scoreboard?${new URLSearchParams({
                       ...(sortKey === 'points' && sortDir === 'desc'
                         ? { sort: 'points', dir: 'asc' }
                         : { sort: 'points', dir: 'desc' }),
                     }).toString()}`}
-                    className="nav-link-muted"
+                    className="nav-link nav-link-muted"
                   >
                     Points
                   </Link>
                 </th>
                 <th style={{ textAlign: 'right', padding: '0.5rem 0.75rem', borderBottom: '1px solid var(--border)' }}>
                   <Link
-                    href={`/?${new URLSearchParams({
+                    href={`/scoreboard?${new URLSearchParams({
                       ...(sortKey === 'max' && sortDir === 'desc'
                         ? { sort: 'max', dir: 'asc' }
                         : { sort: 'max', dir: 'desc' }),
                     }).toString()}`}
-                    className="nav-link-muted"
+                    className="nav-link nav-link-muted"
                   >
                     Max
                   </Link>
                 </th>
                 <th style={{ textAlign: 'right', padding: '0.5rem 0.75rem', borderBottom: '1px solid var(--border)' }}>
                   <Link
-                    href={`/?${new URLSearchParams({
+                    href={`/scoreboard?${new URLSearchParams({
                       ...(sortKey === 'remaining' && sortDir === 'desc'
                         ? { sort: 'remaining', dir: 'asc' }
                         : { sort: 'remaining', dir: 'desc' }),
                     }).toString()}`}
-                    className="nav-link-muted"
+                    className="nav-link nav-link-muted"
                   >
                     Remaining
                   </Link>
