@@ -115,6 +115,41 @@ export function BracketEntry({
   // Final Four feeder mapping: East(1) vs South(3), West(2) vs Midwest(4)
   const FF_FEEDERS: Record<number, [number, number]> = { 1: [1, 3], 2: [2, 4] };
 
+  /**
+   * Check whether the team the user intended for a given side of a game has
+   * been eliminated by real results upstream. Returns true if a feeder along
+   * the pick chain was decided against the user's pick.
+   */
+  const isTeamEliminated = useCallback(
+    (round: number, slot: number, side: 0 | 1): boolean => {
+      if (!results || round <= 1) return false;
+
+      const feeders = round === 5 ? FF_FEEDERS[slot] : undefined;
+      const feederSlot =
+        side === 0
+          ? (feeders ? feeders[0] : 2 * slot - 1)
+          : (feeders ? feeders[1] : 2 * slot);
+      const feederId = `r${round - 1}-${feederSlot}`;
+
+      const feederResult = results[feederId];
+      const feederPick = picks[feederId];
+
+      if (feederResult === 0 || feederResult === 1) {
+        if (feederPick !== undefined && feederPick !== feederResult) {
+          return true;
+        }
+        return isTeamEliminated(round - 1, feederSlot, feederResult);
+      }
+
+      if (feederPick === 0 || feederPick === 1) {
+        return isTeamEliminated(round - 1, feederSlot, feederPick);
+      }
+
+      return false;
+    },
+    [results, picks]
+  );
+
   /** Get the winner's team name for a game (from picks). null if not picked yet. */
   const getWinnerLabel = useCallback(
     (round: number, slot: number): string | null => {
@@ -221,8 +256,8 @@ export function BracketEntry({
               const gameDisabled = locked || !canPick;
               const resWinner = results?.[game.id];
               const isDecided = resWinner === 0 || resWinner === 1;
-              const team1Eliminated = isDecided && resWinner === 1;
-              const team2Eliminated = isDecided && resWinner === 0;
+              const team1Eliminated = (isDecided && resWinner === 1) || (!isRound1 && isTeamEliminated(round, game.slot, 0));
+              const team2Eliminated = (isDecided && resWinner === 0) || (!isRound1 && isTeamEliminated(round, game.slot, 1));
 
               return (
                 <div key={game.id} className="bracket-game">
@@ -279,8 +314,8 @@ export function BracketEntry({
               const gameDisabled = locked || !canPick;
               const resWinner = results?.[game.id];
               const isDecided = resWinner === 0 || resWinner === 1;
-              const team1Eliminated = isDecided && resWinner === 1;
-              const team2Eliminated = isDecided && resWinner === 0;
+              const team1Eliminated = (isDecided && resWinner === 1) || isTeamEliminated(round, game.slot, 0);
+              const team2Eliminated = (isDecided && resWinner === 0) || isTeamEliminated(round, game.slot, 1);
 
               return (
                 <div key={game.id} className="bracket-game">
@@ -331,12 +366,16 @@ export function BracketEntry({
             const t2 = isR1
               ? teamNameMap[`${region}-${game.team2.seed}`] || game.team2.label
               : (derived?.team2 ?? '\u00a0');
+            const resWinner = results?.[game.id];
+            const isDecided = resWinner === 0 || resWinner === 1;
+            const t1Dead = (isDecided && resWinner === 1) || (!isR1 && isTeamEliminated(round, game.slot, 0));
+            const t2Dead = (isDecided && resWinner === 0) || (!isR1 && isTeamEliminated(round, game.slot, 1));
             slots.push(
-              <div key={`${game.id}-a`} className="bp-slot">
+              <div key={`${game.id}-a`} className={`bp-slot${t1Dead ? ' bp-slot--eliminated' : ''}`}>
                 {isR1 && game.team1.seed > 0 && <span className="bp-seed">{game.team1.seed}</span>}
                 <span className="bp-name">{t1}</span>
               </div>,
-              <div key={`${game.id}-b`} className="bp-slot">
+              <div key={`${game.id}-b`} className={`bp-slot${t2Dead ? ' bp-slot--eliminated' : ''}`}>
                 {isR1 && game.team2.seed > 0 && <span className="bp-seed">{game.team2.seed}</span>}
                 <span className="bp-name">{t2}</span>
               </div>,
@@ -356,16 +395,21 @@ export function BracketEntry({
   const renderPrintCenter = () => {
     const ff = gamesByRound[5] ?? [];
     const ch = gamesByRound[6] ?? [];
+    const championEliminated = isTeamEliminated(6, 1, picks['r6-1'] as 0 | 1);
     return (
       <div className="bp-center">
         <div className="bp-center-label">Final Four</div>
         <div className="bp-center-games">
           {ff.map((game) => {
             const d = getDerivedTeams(5, game.slot);
+            const resW = results?.[game.id];
+            const decided = resW === 0 || resW === 1;
+            const t1Dead = (decided && resW === 1) || isTeamEliminated(5, game.slot, 0);
+            const t2Dead = (decided && resW === 0) || isTeamEliminated(5, game.slot, 1);
             return (
               <div key={game.id} className="bp-center-game">
-                <div className="bp-slot">{d.team1 || '\u00a0'}</div>
-                <div className="bp-slot">{d.team2 || '\u00a0'}</div>
+                <div className={`bp-slot${t1Dead ? ' bp-slot--eliminated' : ''}`}>{d.team1 || '\u00a0'}</div>
+                <div className={`bp-slot${t2Dead ? ' bp-slot--eliminated' : ''}`}>{d.team2 || '\u00a0'}</div>
               </div>
             );
           })}
@@ -374,16 +418,20 @@ export function BracketEntry({
         <div className="bp-center-games">
           {ch.map((game) => {
             const d = getDerivedTeams(6, game.slot);
+            const resW = results?.[game.id];
+            const decided = resW === 0 || resW === 1;
+            const t1Dead = (decided && resW === 1) || isTeamEliminated(6, game.slot, 0);
+            const t2Dead = (decided && resW === 0) || isTeamEliminated(6, game.slot, 1);
             return (
               <div key={game.id} className="bp-center-game">
-                <div className="bp-slot">{d.team1 || '\u00a0'}</div>
-                <div className="bp-slot">{d.team2 || '\u00a0'}</div>
+                <div className={`bp-slot${t1Dead ? ' bp-slot--eliminated' : ''}`}>{d.team1 || '\u00a0'}</div>
+                <div className={`bp-slot${t2Dead ? ' bp-slot--eliminated' : ''}`}>{d.team2 || '\u00a0'}</div>
               </div>
             );
           })}
         </div>
         <div className="bp-champion-label">CHAMPION</div>
-        <div className="bp-champion-box">{getWinnerLabel(6, 1) ?? '\u00a0'}</div>
+        <div className={`bp-champion-box${championEliminated ? ' bp-slot--eliminated' : ''}`}>{getWinnerLabel(6, 1) ?? '\u00a0'}</div>
         <div className="bp-tiebreaker">Tiebreaker: {championshipTotal || '______'}</div>
       </div>
     );
@@ -451,8 +499,8 @@ export function BracketEntry({
                   const gameDisabled = locked || !canPick;
                   const resWinner = results?.[game.id];
                   const isDecided = resWinner === 0 || resWinner === 1;
-                  const team1Eliminated = isDecided && resWinner === 1;
-                  const team2Eliminated = isDecided && resWinner === 0;
+                  const team1Eliminated = (isDecided && resWinner === 1) || isTeamEliminated(round, game.slot, 0);
+                  const team2Eliminated = (isDecided && resWinner === 0) || isTeamEliminated(round, game.slot, 1);
 
                   return (
                     <div key={game.id} className="bracket-game">
@@ -501,8 +549,8 @@ export function BracketEntry({
                   const gameDisabled = locked || !canPick;
                   const resWinner = results?.[game.id];
                   const isDecided = resWinner === 0 || resWinner === 1;
-                  const team1Eliminated = isDecided && resWinner === 1;
-                  const team2Eliminated = isDecided && resWinner === 0;
+                  const team1Eliminated = (isDecided && resWinner === 1) || (!isRound1 && isTeamEliminated(round, game.slot, 0));
+                  const team2Eliminated = (isDecided && resWinner === 0) || (!isRound1 && isTeamEliminated(round, game.slot, 1));
 
                   return (
                     <div key={game.id} className="bracket-game">

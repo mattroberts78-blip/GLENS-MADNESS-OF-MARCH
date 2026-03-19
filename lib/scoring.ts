@@ -44,8 +44,49 @@ function getWinnerSeed(gameId: string, results: ResultsJson): number | null {
 }
 
 /**
+ * Check whether the team the user *intended* to pick for a given side of a
+ * game is still alive in reality. Returns false if any feeder game along the
+ * pick path has been decided against the user's pick, meaning the user's
+ * intended team was eliminated before reaching this game.
+ */
+function isPickPathAlive(
+  gameId: string,
+  pickedSide: 0 | 1,
+  picks: Record<string, 0 | 1>,
+  realResults: ResultsJson
+): boolean {
+  const game = GAMES_BY_ID.get(gameId);
+  if (!game || game.round === 1) return true;
+
+  const feeders = game.round === 5 ? FF_FEEDERS[game.slot] : undefined;
+  const feederSlot =
+    pickedSide === 0
+      ? (feeders ? feeders[0] : 2 * game.slot - 1)
+      : (feeders ? feeders[1] : 2 * game.slot);
+  const feederId = `r${game.round - 1}-${feederSlot}`;
+
+  const feederResult = realResults[feederId];
+  const feederPick = picks[feederId];
+
+  if (feederResult === 0 || feederResult === 1) {
+    if (feederPick !== undefined && feederPick !== feederResult) {
+      return false;
+    }
+    return isPickPathAlive(feederId, feederResult, picks, realResults);
+  }
+
+  if (feederPick === 0 || feederPick === 1) {
+    return isPickPathAlive(feederId, feederPick, picks, realResults);
+  }
+
+  return true;
+}
+
+/**
  * Compute total points for an entry given its picks and contest results.
- * Only games that have a result and a matching pick are scored.
+ * Only games that have a result and a matching pick are scored, and only
+ * when the user's intended team (traced through the pick chain) is actually
+ * the one that won.
  */
 export function computeEntryScore(
   picks: Record<string, 0 | 1> | null | undefined,
@@ -58,6 +99,7 @@ export function computeEntryScore(
     if (resultWinner !== 0 && resultWinner !== 1) continue;
     const pick = picks[gameId];
     if (pick !== resultWinner) continue;
+    if (!isPickPathAlive(gameId, pick, picks, results)) continue;
     const winnerSeed = getWinnerSeed(gameId, results);
     if (winnerSeed == null) continue;
     const game = GAMES_BY_ID.get(gameId);
@@ -71,11 +113,9 @@ export function computeEntryScore(
  * Compute the maximum possible score an entry can still achieve, assuming
  * every remaining undecided game breaks in favor of this entry's picks.
  *
- * Implementation detail:
- * - Start from the actual contest results.
- * - For any game that does NOT yet have a recorded result, if the entry
- *   has a pick (0 or 1), assume that pick will be correct.
- * - Reuse computeEntryScore with this hypothetical results map.
+ * A pick for a future game is only counted if the user's intended team is
+ * still alive — i.e. no feeder game along the pick chain has been decided
+ * against the user's pick.
  */
 export function computeEntryMaxScore(
   picks: Record<string, 0 | 1> | null | undefined,
@@ -90,10 +130,58 @@ export function computeEntryMaxScore(
   for (const [gameId, pick] of Object.entries(picks)) {
     if (pick !== 0 && pick !== 1) continue;
     const existing = hypothetical[gameId];
-    if (existing === 0 || existing === 1) continue; // already decided in real results
+    if (existing === 0 || existing === 1) continue;
+    if (!isPickPathAlive(gameId, pick, picks, base)) continue;
     hypothetical[gameId] = pick;
   }
 
   return computeEntryScore(picks, hypothetical);
+}
+
+/**
+ * Break down an entry's earned points by round.
+ * Returns a map from round number (1–6) to points earned in that round.
+ */
+export function computeEntryScoreByRound(
+  picks: Record<string, 0 | 1> | null | undefined,
+  results: ResultsJson | null | undefined
+): Record<number, number> {
+  const byRound: Record<number, number> = {};
+  if (!picks || !results || typeof picks !== 'object' || typeof results !== 'object') return byRound;
+  for (const gameId of Object.keys(results)) {
+    const resultWinner = results[gameId];
+    if (resultWinner !== 0 && resultWinner !== 1) continue;
+    const pick = picks[gameId];
+    if (pick !== resultWinner) continue;
+    if (!isPickPathAlive(gameId, pick, picks, results)) continue;
+    const winnerSeed = getWinnerSeed(gameId, results);
+    if (winnerSeed == null) continue;
+    const game = GAMES_BY_ID.get(gameId);
+    if (!game) continue;
+    const bonus = ROUND_BONUS[game.round] ?? 0;
+    byRound[game.round] = (byRound[game.round] ?? 0) + winnerSeed + bonus;
+  }
+  return byRound;
+}
+
+/**
+ * Compute an entry's score considering only results up through `maxRound`.
+ * Games in rounds above maxRound are masked out, giving "score at end of
+ * round N" for rank-change comparisons.
+ */
+export function computeScoreForRoundsUpTo(
+  picks: Record<string, 0 | 1> | null | undefined,
+  results: ResultsJson | null | undefined,
+  maxRound: number
+): number {
+  if (!picks || !results || typeof picks !== 'object' || typeof results !== 'object') return 0;
+  const masked: ResultsJson = {};
+  for (const [gameId, winner] of Object.entries(results)) {
+    const game = GAMES_BY_ID.get(gameId);
+    if (game && game.round <= maxRound) {
+      masked[gameId] = winner;
+    }
+  }
+  return computeEntryScore(picks, masked);
 }
 

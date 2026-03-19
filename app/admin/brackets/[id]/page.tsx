@@ -60,7 +60,7 @@ export default async function AdminBracketPage({
   }
 
   const contestResult = await sql`
-    SELECT id
+    SELECT id, results_json
     FROM contests
     ORDER BY created_at DESC
     LIMIT 1
@@ -74,8 +74,13 @@ export default async function AdminBracketPage({
       }[]
     | undefined;
 
+  type ResultsJson = Record<string, 0 | 1>;
+  let results: ResultsJson | undefined;
+
   if (contestResult.rowCount && contestResult.rows[0]) {
-    const contestId = (contestResult.rows[0] as { id: number }).id;
+    const contest = contestResult.rows[0] as { id: number; results_json: ResultsJson | null };
+    const contestId = contest.id;
+    results = contest.results_json ?? undefined;
     const teamsResult = await sql`
       SELECT region, seed, name
       FROM teams
@@ -107,6 +112,7 @@ export default async function AdminBracketPage({
         initialPicks={(entry.picks_json as Record<string, 0 | 1> | null) ?? undefined}
         initialChampionshipTotal={entry.championship_total ?? undefined}
         teams={teams}
+        results={results}
       />
     </main>
   );
