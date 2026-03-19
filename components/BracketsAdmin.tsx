@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useTransition, useState } from 'react';
 
 type EntryRow = {
@@ -92,14 +93,19 @@ export function BracketsAdmin({ entries, adminToken }: { entries: EntryRow[]; ad
                     )}
                   </td>
                   <td style={{ padding: '0.5rem 0.75rem', borderTop: '1px solid var(--border)' }}>
-                    <button
-                      type="button"
-                      className="btn btn-secondary"
-                      onClick={() => handleDelete(e.id)}
-                      disabled={isPending}
-                    >
-                      Delete
-                    </button>
+                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                      <Link href={`/admin/brackets/${e.id}`} className="btn btn-secondary">
+                        View
+                      </Link>
+                      <button
+                        type="button"
+                        className="btn btn-secondary"
+                        onClick={() => handleDelete(e.id)}
+                        disabled={isPending}
+                      >
+                        Delete
+                      </button>
+                    </div>
                   </td>
                 </tr>
               );
