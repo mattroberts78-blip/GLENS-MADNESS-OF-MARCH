@@ -480,7 +480,7 @@ export default async function ScoreboardPage({
                       <Link href={sortHref('points')} className="nav-link nav-link-muted">Pts</Link>
                     </th>
                     {roundsWithResults.map((rnd) => (
-                      <th key={rnd} style={{ ...thStyle, fontSize: '0.7rem', color: 'var(--text-muted)' }} title={ROUND_LABELS[rnd]}>
+                      <th key={rnd} className="sb-hide-mobile" style={{ ...thStyle, fontSize: '0.7rem', color: 'var(--text-muted)' }} title={ROUND_LABELS[rnd]}>
                         R{rnd}
                       </th>
                     ))}
@@ -490,7 +490,7 @@ export default async function ScoreboardPage({
                     <th style={thStyle}>
                       <Link href={sortHref('remaining')} className="nav-link nav-link-muted">Rem</Link>
                     </th>
-                    <th style={{ ...thStyle, fontSize: '0.75rem' }}>Range</th>
+                    <th className="sb-hide-mobile" style={{ ...thStyle, fontSize: '0.75rem' }}>Range</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -510,19 +510,19 @@ export default async function ScoreboardPage({
                       <tr key={r.entry_id} className={eliminated ? 'sb-row-elim' : ''}>
                         <td style={{ ...tdStyle, textAlign: 'center', width: 28 }}>{arrow}</td>
                         <td style={{ ...tdStyle, textAlign: 'center', width: 28, fontWeight: 600 }}>{rank}</td>
-                        <td style={{ ...tdStyle, whiteSpace: 'nowrap' }}>
-                          {r.displayName}
+                        <td className="sb-name-cell" style={tdStyle}>
+                          <span className="sb-name-text">{r.displayName}</span>
                           {eliminated && <span className="sb-badge-elim">Eliminated</span>}
                         </td>
                         <td style={{ ...tdRight, fontWeight: 700 }}>{r.score}</td>
                         {roundsWithResults.map((rnd) => (
-                          <td key={rnd} style={{ ...tdRight, fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                          <td key={rnd} className="sb-hide-mobile" style={{ ...tdRight, fontSize: '0.75rem', color: 'var(--text-muted)' }}>
                             {r.byRound[rnd] ?? 0}
                           </td>
                         ))}
                         <td style={tdRight}>{r.maxScore}</td>
                         <td style={tdRight}>{r.remaining}</td>
-                        <td style={{ ...tdRight, fontSize: '0.75rem', whiteSpace: 'nowrap' }}>
+                        <td className="sb-hide-mobile" style={{ ...tdRight, fontSize: '0.75rem', whiteSpace: 'nowrap' }}>
                           {finish ? `${ordinal(finish.best)}–${ordinal(finish.worst)}` : '–'}
                         </td>
                       </tr>

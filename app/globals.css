@@ -1069,3 +1069,113 @@ a:hover {
 .sb-bold-list li {
   line-height: 1.4;
 }
+
+.sb-name-cell {
+  white-space: nowrap;
+}
+
+.sb-name-text {
+  display: inline;
+}
+
+/* ── Mobile: scoreboard responsive ── */
+@media (max-width: 640px) {
+  .sb-page {
+    padding: 1rem 0.75rem;
+  }
+
+  .sb-page .page-title {
+    font-size: 1.25rem;
+  }
+
+  .sb-page .page-subtitle {
+    font-size: 0.8rem;
+    margin-bottom: 1rem;
+  }
+
+  .sb-hide-mobile {
+    display: none !important;
+  }
+
+  /* Stat bar: stack vertically */
+  .sb-stats-bar {
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .sb-stat-block {
+    flex-basis: 100%;
+    padding: 0.5rem 0.75rem;
+  }
+
+  .sb-stat-label {
+    font-size: 0.6rem;
+  }
+
+  .sb-stat-value {
+    font-size: 0.8rem;
+  }
+
+  /* Standings table: tighten */
+  .sb-col-standings table {
+    font-size: 0.75rem;
+  }
+
+  .sb-col-standings th,
+  .sb-col-standings td {
+    padding: 0.3rem 0.25rem !important;
+  }
+
+  .sb-name-cell {
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .sb-name-text {
+    display: inline-block;
+    max-width: 90px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    vertical-align: middle;
+  }
+
+  .sb-badge-elim {
+    font-size: 0.55rem;
+    margin-left: 0.2rem;
+    padding: 0.05rem 0.2rem;
+  }
+
+  .sb-arrow {
+    font-size: 0.55rem;
+  }
+
+  /* Pick distribution: tighten */
+  .sb-col-picks .card-title {
+    font-size: 0.9rem;
+  }
+
+  .sb-col-picks .page-subtitle {
+    font-size: 0.7rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .sb-col-picks .bracket-tab {
+    font-size: 0.65rem;
+    padding: 0.3rem 0.5rem;
+  }
+
+  .sb-col-picks table {
+    font-size: 0.75rem;
+  }
+
+  .sb-col-picks th,
+  .sb-col-picks td {
+    padding: 0.3rem 0.35rem !important;
+  }
+
+  /* Boldest picks card */
+  .sb-bold-list {
+    font-size: 0.7rem;
+  }
+}
