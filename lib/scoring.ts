@@ -11,7 +11,7 @@ export const ROUND_BONUS: Record<number, number> = {
   3: 4,
   4: 8,
   5: 16,
-  6: 32,
+  6: 20,
 };
 
 const GAMES_BY_ID = new Map<string, BracketGame>(

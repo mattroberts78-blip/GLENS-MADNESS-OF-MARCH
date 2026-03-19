@@ -7,7 +7,11 @@ import { DEMO_BRACKET_GAMES, ROUND_LABELS } from '@/lib/bracket-demo-data';
 
 export const dynamic = 'force-dynamic';
 
-export default async function ScoreboardPage() {
+export default async function ScoreboardPage({
+  searchParams,
+}: {
+  searchParams?: { sort?: string; dir?: string };
+}) {
   const session = await getSession();
   if (!session || session.isAdmin) {
     return (
@@ -32,6 +36,13 @@ export default async function ScoreboardPage() {
     payment_verified_at: string | null;
     picks_json: unknown;
   }[] = [];
+  let teams:
+    | {
+        region: string;
+        seed: number;
+        name: string | null;
+      }[]
+    | undefined;
 
   try {
     const contestResult = await sql`
@@ -54,6 +65,14 @@ export default async function ScoreboardPage() {
         ORDER BY c.id ASC, e.id ASC
       `;
       rows = entriesResult.rows as typeof rows;
+
+      const teamsResult = await sql`
+        SELECT region, seed, name
+        FROM teams
+        WHERE contest_id = ${contest.id}
+        ORDER BY region, seed
+      `;
+      teams = teamsResult.rows as typeof teams;
     }
   } catch (err) {
     console.error('[scoreboard]', err);
@@ -90,7 +109,21 @@ export default async function ScoreboardPage() {
     return { ...r, displayName };
   });
 
-  withDisplayName.sort((a, b) => b.score - a.score);
+  // Sorting: default by points desc; allow sort by points, max, remaining via query params.
+  const sortKey = searchParams?.sort ?? 'points';
+  const sortDir = searchParams?.dir === 'asc' ? 'asc' : 'desc';
+
+  withDisplayName.sort((a, b) => {
+    const dir = sortDir === 'asc' ? 1 : -1;
+    if (sortKey === 'max') {
+      return (a.maxScore - b.maxScore) * dir;
+    }
+    if (sortKey === 'remaining') {
+      return (a.remaining - b.remaining) * dir;
+    }
+    // default: points
+    return (a.score - b.score) * dir;
+  });
 
   // Determine the "current round" as the highest round number that has at least one decided game.
   const currentRound = (() => {
@@ -114,6 +147,15 @@ export default async function ScoreboardPage() {
     const totalEntries = withDisplayName.length;
     if (totalEntries === 0 || games.length === 0) return [];
 
+    const teamNameMap: Record<string, string> = {};
+    if (teams) {
+      for (const t of teams) {
+        if (!t?.name) continue;
+        const regionKey = t.region.trim();
+        teamNameMap[`${regionKey}-${t.seed}`] = t.name;
+      }
+    }
+
     return games.map((game) => {
       let team1Count = 0;
       let team2Count = 0;
@@ -128,11 +170,26 @@ export default async function ScoreboardPage() {
       const toPct = (count: number) =>
         totalEntries === 0 ? 0 : Math.round((count / totalEntries) * 1000) / 10; // one decimal
 
+      let team1Label = game.team1.label;
+      let team2Label = game.team2.label;
+
+      if (game.round === 1 && teams && Object.keys(teamNameMap).length > 0) {
+        // Derive region from slot: 8 games per region in round 1, ordered East, West, South, Midwest.
+        const regionIndex = Math.floor((game.slot - 1) / 8);
+        const region = ['East', 'West', 'South', 'Midwest'][regionIndex] ?? null;
+        if (region) {
+          const key1 = `${region}-${game.team1.seed}`;
+          const key2 = `${region}-${game.team2.seed}`;
+          team1Label = teamNameMap[key1] ?? team1Label;
+          team2Label = teamNameMap[key2] ?? team2Label;
+        }
+      }
+
       return {
         id: game.id,
         label: `${ROUND_LABELS[game.round] ?? `Round ${game.round}`} · Game ${game.slot}`,
-        team1Label: game.team1.label,
-        team2Label: game.team2.label,
+        team1Label,
+        team2Label,
         team1Pct: toPct(team1Count),
         team2Pct: toPct(team2Count),
       };
@@ -162,9 +219,42 @@ export default async function ScoreboardPage() {
                   <th style={{ textAlign: 'left', padding: '0.5rem 0.75rem', borderBottom: '1px solid var(--border)' }}>#</th>
                   <th style={{ textAlign: 'left', padding: '0.5rem 0.75rem', borderBottom: '1px solid var(--border)' }}>Bracket</th>
                   <th style={{ textAlign: 'left', padding: '0.5rem 0.75rem', borderBottom: '1px solid var(--border)' }}>Participant</th>
-                  <th style={{ textAlign: 'right', padding: '0.5rem 0.75rem', borderBottom: '1px solid var(--border)' }}>Points</th>
-                  <th style={{ textAlign: 'right', padding: '0.5rem 0.75rem', borderBottom: '1px solid var(--border)' }}>Max</th>
-                  <th style={{ textAlign: 'right', padding: '0.5rem 0.75rem', borderBottom: '1px solid var(--border)' }}>Remaining</th>
+                <th style={{ textAlign: 'right', padding: '0.5rem 0.75rem', borderBottom: '1px solid var(--border)' }}>
+                  <Link
+                    href={`/?${new URLSearchParams({
+                      ...(sortKey === 'points' && sortDir === 'desc'
+                        ? { sort: 'points', dir: 'asc' }
+                        : { sort: 'points', dir: 'desc' }),
+                    }).toString()}`}
+                    className="nav-link-muted"
+                  >
+                    Points
+                  </Link>
+                </th>
+                <th style={{ textAlign: 'right', padding: '0.5rem 0.75rem', borderBottom: '1px solid var(--border)' }}>
+                  <Link
+                    href={`/?${new URLSearchParams({
+                      ...(sortKey === 'max' && sortDir === 'desc'
+                        ? { sort: 'max', dir: 'asc' }
+                        : { sort: 'max', dir: 'desc' }),
+                    }).toString()}`}
+                    className="nav-link-muted"
+                  >
+                    Max
+                  </Link>
+                </th>
+                <th style={{ textAlign: 'right', padding: '0.5rem 0.75rem', borderBottom: '1px solid var(--border)' }}>
+                  <Link
+                    href={`/?${new URLSearchParams({
+                      ...(sortKey === 'remaining' && sortDir === 'desc'
+                        ? { sort: 'remaining', dir: 'asc' }
+                        : { sort: 'remaining', dir: 'desc' }),
+                    }).toString()}`}
+                    className="nav-link-muted"
+                  >
+                    Remaining
+                  </Link>
+                </th>
                 </tr>
               </thead>
               <tbody>
