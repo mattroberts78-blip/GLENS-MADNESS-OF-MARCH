@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { getSession } from '@/lib/auth/session';
 import { sql } from '@vercel/postgres';
+import { Countdown } from '@/components/Countdown';
 
 export async function Header() {
   const session = await getSession();
@@ -33,6 +34,7 @@ export async function Header() {
         </span>
         <span className="site-title">Glen&apos;s Madness of March</span>
       </Link>
+      <Countdown />
       <nav className="site-nav">
         {session?.isAdmin ? (
           <>
