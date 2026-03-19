@@ -862,3 +862,76 @@ a:hover {
   font-size: 0.95rem;
   margin: 0;
 }
+
+/* Scoreboard pick distribution: per-user bracket indicators */
+.pd-team-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.pd-team-row--second {
+  margin-top: 0.15rem;
+}
+
+.pd-team-pct {
+  font-variant-numeric: tabular-nums;
+}
+
+.pd-user-header {
+  text-align: center;
+  padding: 0.5rem 0.25rem;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  min-width: 28px;
+}
+
+.pd-user-header-sub {
+  text-align: center;
+  padding: 0.25rem 0.25rem;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+
+.pd-user-cell {
+  padding: 0.4rem 0.25rem;
+  border-top: 1px solid var(--border);
+  text-align: center;
+  vertical-align: middle;
+}
+
+.pd-user-dot-row {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1px;
+}
+
+.pd-user-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  border: 1px solid rgba(148, 163, 184, 0.6);
+  background: transparent;
+}
+
+.pd-user-dot--picked {
+  background: var(--accent);
+  border-color: var(--accent-hover);
+}
+
+.pd-user-dot--correct {
+  background: var(--success);
+  border-color: var(--success);
+}
+
+.pd-user-dot--wrong {
+  background: var(--error);
+  border-color: var(--error);
+}
+
+.pd-team-row--winner {
+  color: var(--accent-hover);
+  font-weight: 600;
+}

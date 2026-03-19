@@ -34,6 +34,7 @@ export default async function AdminPage({
     name: string | null;
     locked_at: string | null;
     username: string;
+    picks_complete: boolean | null;
   }[] = [];
   let dbError: string | null = null;
   let teams: {
@@ -54,7 +55,7 @@ export default async function AdminPage({
     participants = participantsResult.rows as typeof participants;
 
     const entriesResult = await sql`
-      SELECT e.id, e.name, e.locked_at, c.username
+      SELECT e.id, e.name, e.locked_at, e.picks_complete, c.username
       FROM entries e
       JOIN credentials c ON e.credential_id = c.id
       WHERE LOWER(TRIM(c.username)) <> 'admin'

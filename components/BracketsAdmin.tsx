@@ -8,6 +8,7 @@ type EntryRow = {
   name: string | null;
   locked_at: string | null;
   username: string;
+  picks_complete: boolean | null;
 };
 
 export function BracketsAdmin({ entries, adminToken }: { entries: EntryRow[]; adminToken: string }) {
@@ -78,6 +79,7 @@ export function BracketsAdmin({ entries, adminToken }: { entries: EntryRow[]; ad
           ) : (
             entries.map((e) => {
               const locked = e.locked_at != null;
+              const complete = e.picks_complete === true;
               return (
                 <tr key={e.id}>
                   <td style={{ padding: '0.5rem 0.75rem', borderTop: '1px solid var(--border)' }}>{e.id}</td>
@@ -88,8 +90,10 @@ export function BracketsAdmin({ entries, adminToken }: { entries: EntryRow[]; ad
                   <td style={{ padding: '0.5rem 0.75rem', borderTop: '1px solid var(--border)' }}>
                     {locked ? (
                       <span className="badge badge-locked">Locked</span>
+                    ) : complete ? (
+                      <span className="badge badge-complete">Complete</span>
                     ) : (
-                      <span className="badge badge-open">Open</span>
+                      <span className="badge badge-open">Not complete</span>
                     )}
                   </td>
                   <td style={{ padding: '0.5rem 0.75rem', borderTop: '1px solid var(--border)' }}>

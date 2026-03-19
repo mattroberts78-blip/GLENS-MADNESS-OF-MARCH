@@ -25,6 +25,7 @@ type EntryRow = {
   name: string | null;
   locked_at: string | null;
   username: string;
+  picks_complete: boolean | null;
 };
 
 type SectionKey = 'participants' | 'brackets' | 'lock' | 'teams' | 'results';
