@@ -902,21 +902,21 @@ a:hover {
 }
 
 .pd-user-cell {
-  padding: 0.4rem 0.25rem;
+  padding: 0.25rem 0.25rem;
   border-top: 1px solid var(--border);
   text-align: center;
-  vertical-align: middle;
+  vertical-align: top;
 }
 
 .pd-user-dot-row {
   display: flex;
   justify-content: center;
-  margin-bottom: 1px;
+  margin-bottom: 4px;
 }
 
 .pd-user-dot {
-  width: 9px;
-  height: 9px;
+  width: 11px;
+  height: 11px;
   border-radius: 50%;
   border: 1px solid rgba(148, 163, 184, 0.8);
   background: transparent;
