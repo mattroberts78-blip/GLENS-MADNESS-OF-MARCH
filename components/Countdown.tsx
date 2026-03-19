@@ -1,6 +1,6 @@
-\"use client\";
+"use client";
 
-import { useEffect, useState } from \"react\";
+import { useEffect, useState } from "react";
 
 type Remaining = {
   totalMs: number;
@@ -9,7 +9,8 @@ type Remaining = {
   seconds: number;
 };
 
-const TARGET_TIME = new Date(\"2026-03-19T16:15:00Z\").getTime(); // 11:15 CDT
+// 2026-03-19T11:15:00 CDT == 2026-03-19T16:15:00Z
+const TARGET_TIME = new Date("2026-03-19T16:15:00Z").getTime();
 
 function getRemaining(): Remaining {
   const now = Date.now();
@@ -35,17 +36,18 @@ export function Countdown() {
 
   if (remaining.totalMs <= 0) {
     return (
-      <div className=\"countdown-banner countdown-banner-locked\">
+      <div className="countdown-banner countdown-banner-locked">
         Brackets are locked.
       </div>
     );
   }
 
-  const pad = (n: number) => n.toString().padStart(2, \"0\");
+  const pad = (n: number) => n.toString().padStart(2, "0");
 
   return (
-    <div className=\"countdown-banner\">
-      Brackets lock in {pad(remaining.hours)}:{pad(remaining.minutes)}:{pad(remaining.seconds)} (11:15&nbsp;CDT)
+    <div className="countdown-banner">
+      Brackets lock in {pad(remaining.hours)}:{pad(remaining.minutes)}:
+      {pad(remaining.seconds)} (11:15&nbsp;CDT)
     </div>
   );
 }
