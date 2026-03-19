@@ -33,13 +33,13 @@ function Arrow({ rank, prevRank }: { rank: number; prevRank?: number }) {
 
 export function ScoreboardStandings({
   rows,
-  roundsWithResults,
+  roundColumns,
   leaderScore,
   prevRankMap,
   finishMap,
 }: {
   rows: StandingsRow[];
-  roundsWithResults: number[];
+  roundColumns: number[];
   leaderScore: number;
   prevRankMap: PrevRankMap;
   finishMap: FinishMap;
@@ -69,6 +69,12 @@ export function ScoreboardStandings({
 
   const visibleRows = showAll ? filteredRows : filteredRows.slice(0, 10);
   const rankMap = useMemo(() => new Map(sortedRows.map((r, i) => [r.entry_id, i + 1])), [sortedRows]);
+  const pointsStandingMap = useMemo(() => {
+    const byPoints = [...rows].sort((a, b) => b.score - a.score);
+    const map = new Map<number, number>();
+    byPoints.forEach((r, i) => map.set(r.entry_id, i + 1));
+    return map;
+  }, [rows]);
 
   const thStyle = {
     textAlign: "right" as const,
@@ -107,12 +113,15 @@ export function ScoreboardStandings({
               <Arrow rank={rank} prevRank={prevRank} />
             </td>
             <td style={{ ...tdStyle, textAlign: "center", width: 28, fontWeight: 600 }}>{rank}</td>
+            <td style={{ ...tdStyle, textAlign: "center", width: 36, fontWeight: 600 }}>
+              {pointsStandingMap.get(r.entry_id) ?? rank}
+            </td>
             <td className="sb-name-cell" style={tdStyle}>
               <span className="sb-name-text">{r.displayName}</span>
               {eliminated && <span className="sb-badge-elim">Eliminated</span>}
             </td>
             <td style={{ ...tdRight, fontWeight: 700 }}>{r.score}</td>
-            {roundsWithResults.map((rnd) => (
+            {roundColumns.map((rnd) => (
               <td key={rnd} className="sb-hide-mobile" style={{ ...tdRight, fontSize: "0.75rem", color: "var(--text-muted)" }}>
                 {r.byRound[rnd] ?? 0}
               </td>
@@ -171,13 +180,14 @@ export function ScoreboardStandings({
             <tr>
               <th style={{ ...thStyle, textAlign: "center", width: 28 }} title="Rank change">&nbsp;</th>
               <th style={{ ...thStyle, textAlign: "center", width: 28 }}>#</th>
+              <th style={{ ...thStyle, textAlign: "center", width: 36 }} title="Current standing by points only">Stnd</th>
               <th style={{ ...thStyle, textAlign: "left" }}>Bracket</th>
               <th style={thStyle}>
                 <button type="button" className="nav-link nav-link-muted" onClick={() => onSort("points")}>
                   {sortLabel("points", "Pts")}
                 </button>
               </th>
-              {roundsWithResults.map((rnd) => (
+              {roundColumns.map((rnd) => (
                 <th key={rnd} className="sb-hide-mobile" style={{ ...thStyle, fontSize: "0.7rem", color: "var(--text-muted)" }}>
                   R{rnd}
                 </th>
@@ -205,7 +215,7 @@ export function ScoreboardStandings({
               renderRows(visibleRows)
             ) : (
               <tr>
-                <td colSpan={8 + roundsWithResults.length} style={{ ...tdStyle, textAlign: "center", color: "var(--text-muted)" }}>
+                <td colSpan={9 + roundColumns.length} style={{ ...tdStyle, textAlign: "center", color: "var(--text-muted)" }}>
                   No brackets match your search.
                 </td>
               </tr>

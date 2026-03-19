@@ -11,6 +11,7 @@ import {
 import type { ResultsJson } from '@/lib/scoring';
 import { DEMO_BRACKET_GAMES, ROUND_LABELS } from '@/lib/bracket-demo-data';
 import { ScoreboardStandings } from '@/components/ScoreboardStandings';
+import { TeamRoundPicksModal } from '@/components/TeamRoundPicksModal';
 
 export const dynamic = 'force-dynamic';
 
@@ -195,6 +196,7 @@ export default async function ScoreboardPage({
     ...r,
     riskPercentile: riskPercentileMap.get(r.entry_id) ?? 50,
   }));
+  const allRounds = [1, 2, 3, 4, 5, 6];
 
   // ── Sorting ──
   const sortKey = searchParams?.sort ?? 'points';
@@ -368,6 +370,52 @@ export default async function ScoreboardPage({
   });
   const finishMap = new Map(finishRange.map((f) => [f.entry_id, f]));
 
+  const tournamentTeams = (() => {
+    const set = new Set<string>();
+    for (const t of teams ?? []) {
+      const name = (t?.name ?? '').trim();
+      if (name) set.add(name);
+    }
+    if (set.size === 0) {
+      for (const g of allGames.filter((x) => x.round === 1)) {
+        set.add(g.team1.label);
+        set.add(g.team2.label);
+      }
+    }
+    return [...set].sort((a, b) => a.localeCompare(b));
+  })();
+
+  const teamRoundRows = (() => {
+    const rowsByTeam = new Map<string, Record<number, number>>();
+    for (const team of tournamentTeams) {
+      rowsByTeam.set(team, { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0 });
+    }
+
+    const gamesByRound = new Map<number, typeof allGames>();
+    for (const round of allRounds) {
+      gamesByRound.set(round, allGames.filter((g) => g.round === round));
+    }
+
+    for (const entry of withRisk) {
+      const picks = entry.picks_json as Record<string, 0 | 1> | null;
+      if (!picks) continue;
+      for (const round of allRounds) {
+        for (const game of gamesByRound.get(round) ?? []) {
+          const team = tracePickToTeamName(round, game.slot, picks, teamNameMap, allGames);
+          if (!team) continue;
+          const counters = rowsByTeam.get(team);
+          if (!counters) continue;
+          counters[round] = (counters[round] ?? 0) + 1;
+        }
+      }
+    }
+
+    return tournamentTeams.map((team) => ({
+      team,
+      counts: rowsByTeam.get(team) ?? { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, 6: 0 },
+    }));
+  })();
+
   // ── Pick distribution for current round ──
   const pickDistribution = (() => {
     const games = allGames.filter((g) => g.round === currentRound);
@@ -479,7 +527,7 @@ export default async function ScoreboardPage({
           <div className="sb-col-standings">
             <ScoreboardStandings
               rows={withRisk}
-              roundsWithResults={roundsWithResults}
+              roundColumns={allRounds}
               leaderScore={leaderScore}
               prevRankMap={Object.fromEntries(prevRankMap.entries())}
               finishMap={Object.fromEntries(finishMap.entries())}
@@ -504,6 +552,7 @@ export default async function ScoreboardPage({
 
           {/* ═══════ RIGHT COLUMN: Pick Distribution ═══════ */}
           <div className="sb-col-picks">
+            <TeamRoundPicksModal rows={teamRoundRows} rounds={allRounds} totalEntries={totalEntries} />
             {pickDistribution.length > 0 && (
               <section className="card">
                 <h2 className="card-title">
