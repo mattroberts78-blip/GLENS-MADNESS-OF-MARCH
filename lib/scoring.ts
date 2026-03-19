@@ -185,3 +185,94 @@ export function computeScoreForRoundsUpTo(
   return computeEntryScore(picks, masked);
 }
 
+const RISK_ROUND_MULTIPLIER: Record<number, number> = {
+  1: 1.0,
+  2: 1.3,
+  3: 1.7,
+  4: 2.2,
+  5: 3.0,
+  6: 4.0,
+};
+
+const CHALK_PENALTY_MULTIPLIER = 0.75;
+
+function getPickedWinnerSeed(
+  gameId: string,
+  picks: Record<string, 0 | 1>
+): number | null {
+  const game = GAMES_BY_ID.get(gameId);
+  if (!game) return null;
+  const pick = picks[gameId];
+  if (pick !== 0 && pick !== 1) return null;
+
+  if (game.round === 1) {
+    return pick === 0 ? game.team1.seed : game.team2.seed;
+  }
+
+  const feeders = game.round === 5 ? FF_FEEDERS[game.slot] : undefined;
+  const prevSlot1 = feeders ? feeders[0] : 2 * game.slot - 1;
+  const prevSlot2 = feeders ? feeders[1] : 2 * game.slot;
+  const prevId1 = `r${game.round - 1}-${prevSlot1}`;
+  const prevId2 = `r${game.round - 1}-${prevSlot2}`;
+  const seed1 = getPickedWinnerSeed(prevId1, picks);
+  const seed2 = getPickedWinnerSeed(prevId2, picks);
+  if (seed1 == null || seed2 == null) return null;
+  return pick === 0 ? seed1 : seed2;
+}
+
+function getPickedMatchupSeeds(
+  gameId: string,
+  picks: Record<string, 0 | 1>
+): [number, number] | null {
+  const game = GAMES_BY_ID.get(gameId);
+  if (!game) return null;
+
+  if (game.round === 1) {
+    return [game.team1.seed, game.team2.seed];
+  }
+
+  const feeders = game.round === 5 ? FF_FEEDERS[game.slot] : undefined;
+  const prevSlot1 = feeders ? feeders[0] : 2 * game.slot - 1;
+  const prevSlot2 = feeders ? feeders[1] : 2 * game.slot;
+  const prevId1 = `r${game.round - 1}-${prevSlot1}`;
+  const prevId2 = `r${game.round - 1}-${prevSlot2}`;
+  const seed1 = getPickedWinnerSeed(prevId1, picks);
+  const seed2 = getPickedWinnerSeed(prevId2, picks);
+  if (seed1 == null || seed2 == null) return null;
+  return [seed1, seed2];
+}
+
+/**
+ * Compute a bracket's "risk score" from all picks.
+ * Underdog picks add positive risk, favorite picks add negative risk.
+ */
+export function computeEntryRiskScore(
+  picks: Record<string, 0 | 1> | null | undefined
+): number {
+  if (!picks || typeof picks !== 'object') return 0;
+
+  let totalRisk = 0;
+  for (const game of DEMO_BRACKET_GAMES ?? []) {
+    const pick = picks[game.id];
+    if (pick !== 0 && pick !== 1) continue;
+
+    const matchupSeeds = getPickedMatchupSeeds(game.id, picks);
+    if (!matchupSeeds) continue;
+
+    const [seedA, seedB] = matchupSeeds;
+    const pickedSeed = pick === 0 ? seedA : seedB;
+    const otherSeed = pick === 0 ? seedB : seedA;
+    const gap = Math.abs(seedA - seedB);
+    if (gap === 0) continue;
+
+    const roundMult = RISK_ROUND_MULTIPLIER[game.round] ?? 1;
+    if (pickedSeed > otherSeed) {
+      totalRisk += gap * roundMult;
+    } else if (pickedSeed < otherSeed) {
+      totalRisk -= gap * CHALK_PENALTY_MULTIPLIER * roundMult;
+    }
+  }
+
+  return Math.round(totalRisk * 10) / 10;
+}
+

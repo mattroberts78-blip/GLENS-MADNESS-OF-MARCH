@@ -6,9 +6,11 @@ import {
   computeEntryMaxScore,
   computeEntryScoreByRound,
   computeScoreForRoundsUpTo,
+  computeEntryRiskScore,
 } from '@/lib/scoring';
 import type { ResultsJson } from '@/lib/scoring';
 import { DEMO_BRACKET_GAMES, ROUND_LABELS } from '@/lib/bracket-demo-data';
+import { ScoreboardStandings } from '@/components/ScoreboardStandings';
 
 export const dynamic = 'force-dynamic';
 
@@ -43,10 +45,29 @@ function tracePickToTeamName(
   return tracePickToTeamName(round - 1, feederSlot, picks, teamNameMap, allGames);
 }
 
-function ordinal(n: number): string {
-  const s = ['th', 'st', 'nd', 'rd'];
-  const v = n % 100;
-  return n + (s[(v - 20) % 10] || s[v] || s[0]);
+function computeRiskPercentileMap(
+  entries: { entry_id: number; riskScore: number }[]
+): Map<number, number> {
+  const map = new Map<number, number>();
+  if (entries.length === 0) return map;
+  if (entries.length === 1) {
+    map.set(entries[0].entry_id, 50);
+    return map;
+  }
+
+  const sorted = [...entries].sort((a, b) => a.riskScore - b.riskScore);
+  let i = 0;
+  while (i < sorted.length) {
+    let j = i;
+    while (j + 1 < sorted.length && sorted[j + 1].riskScore === sorted[i].riskScore) j++;
+    const avgRank = (i + j) / 2;
+    const pct = Math.round((avgRank / (sorted.length - 1)) * 100);
+    for (let k = i; k <= j; k++) {
+      map.set(sorted[k].entry_id, pct);
+    }
+    i = j + 1;
+  }
+  return map;
 }
 
 export default async function ScoreboardPage({
@@ -147,7 +168,8 @@ export default async function ScoreboardPage({
     const maxScore = computeEntryMaxScore(picks, results);
     const remaining = Math.max(0, maxScore - score);
     const byRound = computeEntryScoreByRound(picks, results);
-    return { ...r, score, maxScore, remaining, byRound };
+    const riskScore = computeEntryRiskScore(picks);
+    return { ...r, score, maxScore, remaining, byRound, riskScore };
   });
 
   let prevCredentialId: number | null = null;
@@ -166,14 +188,23 @@ export default async function ScoreboardPage({
     return { ...r, displayName };
   });
 
+  const riskPercentileMap = computeRiskPercentileMap(
+    withDisplayName.map((r) => ({ entry_id: r.entry_id, riskScore: r.riskScore }))
+  );
+  const withRisk = withDisplayName.map((r) => ({
+    ...r,
+    riskPercentile: riskPercentileMap.get(r.entry_id) ?? 50,
+  }));
+
   // ── Sorting ──
   const sortKey = searchParams?.sort ?? 'points';
   const sortDir = searchParams?.dir === 'asc' ? 'asc' : 'desc';
 
-  withDisplayName.sort((a, b) => {
+  withRisk.sort((a, b) => {
     const dir = sortDir === 'asc' ? 1 : -1;
     if (sortKey === 'max') return (a.maxScore - b.maxScore) * dir;
     if (sortKey === 'remaining') return (a.remaining - b.remaining) * dir;
+    if (sortKey === 'risk') return (a.riskPercentile - b.riskPercentile) * dir;
     return (a.score - b.score) * dir;
   });
 
@@ -230,15 +261,15 @@ export default async function ScoreboardPage({
   }
 
   // ── Feature 1: Eliminated badge ──
-  const leaderScore = withDisplayName.length > 0
-    ? Math.max(...withDisplayName.map((r) => r.score))
+  const leaderScore = withRisk.length > 0
+    ? Math.max(...withRisk.map((r) => r.score))
     : 0;
 
   // ── Feature 2: Rank change arrows ──
   const prevRound = currentRound > 1 ? currentRound - 1 : 0;
   const prevRankMap = new Map<number, number>();
   if (prevRound > 0 && results) {
-    const prevScores = withDisplayName.map((r) => ({
+    const prevScores = withRisk.map((r) => ({
       entry_id: r.entry_id,
       prevScore: computeScoreForRoundsUpTo(
         r.picks_json as Record<string, 0 | 1> | null,
@@ -253,9 +284,9 @@ export default async function ScoreboardPage({
   // ── Feature 5: Most popular champion + Final Four ──
   const championTally: Record<string, number> = {};
   const finalFourTally: Record<string, number> = {};
-  const totalEntries = withDisplayName.length;
+  const totalEntries = withRisk.length;
 
-  for (const r of withDisplayName) {
+  for (const r of withRisk) {
     const picks = r.picks_json as Record<string, 0 | 1> | null;
     if (!picks) continue;
 
@@ -287,14 +318,14 @@ export default async function ScoreboardPage({
       if (resultWinner !== 0 && resultWinner !== 1) continue;
 
       let pickedWinnerCount = 0;
-      for (const r of withDisplayName) {
+      for (const r of withRisk) {
         const picks = r.picks_json as Record<string, 0 | 1> | null;
         if (picks?.[game.id] === resultWinner) pickedWinnerCount++;
       }
       const pct = (pickedWinnerCount / totalEntries) * 100;
       if (pct >= 20) continue;
 
-      for (const r of withDisplayName) {
+      for (const r of withRisk) {
         const picks = r.picks_json as Record<string, 0 | 1> | null;
         if (picks?.[game.id] !== resultWinner) continue;
 
@@ -321,10 +352,10 @@ export default async function ScoreboardPage({
   const topBoldPicks = boldPicks.slice(0, 5);
 
   // ── Feature 6: Best / Worst possible finish ──
-  const finishRange = withDisplayName.map((r) => {
+  const finishRange = withRisk.map((r) => {
     let betterThanMax = 0;
     let maxBetterThanCurrent = 0;
-    for (const other of withDisplayName) {
+    for (const other of withRisk) {
       if (other.entry_id === r.entry_id) continue;
       if (other.score > r.maxScore) betterThanMax++;
       if (other.maxScore > r.score) maxBetterThanCurrent++;
@@ -347,7 +378,7 @@ export default async function ScoreboardPage({
     return games.map((game) => {
       let team1Count = 0;
       let team2Count = 0;
-      for (const r of withDisplayName) {
+      for (const r of withRisk) {
         const picks = r.picks_json as Record<string, 0 | 1> | null;
         const pick = picks?.[game.id];
         if (pick === 0) team1Count += 1;
@@ -393,32 +424,6 @@ export default async function ScoreboardPage({
     });
   })();
 
-  // ── Sort link helper ──
-  const sortHref = (key: string) => {
-    const params = new URLSearchParams();
-    if (searchParams?.round) params.set('round', searchParams.round);
-    if (sortKey === key && sortDir === 'desc') {
-      params.set('sort', key);
-      params.set('dir', 'asc');
-    } else {
-      params.set('sort', key);
-      params.set('dir', 'desc');
-    }
-    return `/scoreboard?${params.toString()}`;
-  };
-
-  const thStyle = {
-    textAlign: 'right' as const,
-    padding: '0.5rem 0.5rem',
-    borderBottom: '1px solid var(--border)',
-    whiteSpace: 'nowrap' as const,
-  };
-  const tdStyle = {
-    padding: '0.4rem 0.5rem',
-    borderTop: '1px solid var(--border)',
-  };
-  const tdRight = { ...tdStyle, textAlign: 'right' as const, fontVariantNumeric: 'tabular-nums' as const };
-
   return (
     <main className="page-container sb-page">
       <p style={{ marginBottom: '1rem' }}>
@@ -429,6 +434,9 @@ export default async function ScoreboardPage({
         {contest
           ? `Live standings for ${contest.name}. Points = correct pick (winner seed + round bonus).`
           : 'No contest yet. Once the admin adds results, standings will appear here.'}
+      </p>
+      <p className="page-subtitle" style={{ marginTop: '-0.35rem', fontSize: '0.82rem' }}>
+        Risk% shows bracket aggressiveness percentile in this pool: underdog picks increase risk, favorite picks reduce risk.
       </p>
 
       {/* ── Stat bar: champion + Final Four picks ── */}
@@ -463,74 +471,19 @@ export default async function ScoreboardPage({
         </div>
       )}
 
-      {withDisplayName.length === 0 ? (
+      {withRisk.length === 0 ? (
         <p style={{ color: 'var(--text-muted)' }}>No entries yet.</p>
       ) : (
         <div className="sb-columns">
           {/* ═══════ LEFT COLUMN: Standings ═══════ */}
           <div className="sb-col-standings">
-            <section className="card" style={{ overflow: 'auto' }}>
-              <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
-                <thead>
-                  <tr>
-                    <th style={{ ...thStyle, textAlign: 'center', width: 28 }} title="Rank change">&nbsp;</th>
-                    <th style={{ ...thStyle, textAlign: 'center', width: 28 }}>#</th>
-                    <th style={{ ...thStyle, textAlign: 'left' }}>Bracket</th>
-                    <th style={thStyle}>
-                      <Link href={sortHref('points')} className="nav-link nav-link-muted">Pts</Link>
-                    </th>
-                    {roundsWithResults.map((rnd) => (
-                      <th key={rnd} className="sb-hide-mobile" style={{ ...thStyle, fontSize: '0.7rem', color: 'var(--text-muted)' }} title={ROUND_LABELS[rnd]}>
-                        R{rnd}
-                      </th>
-                    ))}
-                    <th style={thStyle}>
-                      <Link href={sortHref('max')} className="nav-link nav-link-muted">Max</Link>
-                    </th>
-                    <th style={thStyle}>
-                      <Link href={sortHref('remaining')} className="nav-link nav-link-muted">Rem</Link>
-                    </th>
-                    <th className="sb-hide-mobile" style={{ ...thStyle, fontSize: '0.75rem' }}>Range</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {withDisplayName.map((r, i) => {
-                    const rank = i + 1;
-                    const prevRank = prevRankMap.get(r.entry_id);
-                    const eliminated = r.maxScore < leaderScore;
-                    const finish = finishMap.get(r.entry_id);
-                    let arrow: React.ReactNode = <span className="sb-arrow sb-arrow--same">–</span>;
-                    if (prevRank != null) {
-                      const diff = prevRank - rank;
-                      if (diff > 0) arrow = <span className="sb-arrow sb-arrow--up">▲{diff}</span>;
-                      else if (diff < 0) arrow = <span className="sb-arrow sb-arrow--down">▼{Math.abs(diff)}</span>;
-                    }
-
-                    return (
-                      <tr key={r.entry_id} className={eliminated ? 'sb-row-elim' : ''}>
-                        <td style={{ ...tdStyle, textAlign: 'center', width: 28 }}>{arrow}</td>
-                        <td style={{ ...tdStyle, textAlign: 'center', width: 28, fontWeight: 600 }}>{rank}</td>
-                        <td className="sb-name-cell" style={tdStyle}>
-                          <span className="sb-name-text">{r.displayName}</span>
-                          {eliminated && <span className="sb-badge-elim">Eliminated</span>}
-                        </td>
-                        <td style={{ ...tdRight, fontWeight: 700 }}>{r.score}</td>
-                        {roundsWithResults.map((rnd) => (
-                          <td key={rnd} className="sb-hide-mobile" style={{ ...tdRight, fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-                            {r.byRound[rnd] ?? 0}
-                          </td>
-                        ))}
-                        <td style={tdRight}>{r.maxScore}</td>
-                        <td style={tdRight}>{r.remaining}</td>
-                        <td className="sb-hide-mobile" style={{ ...tdRight, fontSize: '0.75rem', whiteSpace: 'nowrap' }}>
-                          {finish ? `${ordinal(finish.best)}–${ordinal(finish.worst)}` : '–'}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </section>
+            <ScoreboardStandings
+              rows={withRisk}
+              roundsWithResults={roundsWithResults}
+              leaderScore={leaderScore}
+              prevRankMap={Object.fromEntries(prevRankMap.entries())}
+              finishMap={Object.fromEntries(finishMap.entries())}
+            />
 
             {/* ── Boldest Picks callout ── */}
             {topBoldPicks.length > 0 && (
