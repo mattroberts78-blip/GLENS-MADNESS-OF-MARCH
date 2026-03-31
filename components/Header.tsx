@@ -6,6 +6,9 @@ import { Countdown } from '@/components/Countdown';
 export async function Header() {
   const session = await getSession();
   const homeHref = session?.isAdmin ? '/admin' : session?.contest === 'golf' ? '/golf' : '/';
+  const isGolfBrand = session?.contest === 'golf';
+  const brandLogoSrc = isGolfBrand ? '/Dans_Logo.png' : '/glensmadness.png';
+  const brandTitle = isGolfBrand ? "Dan's Master's Pick'em" : "Glen's Madness of March";
 
   let displayName: string = session?.username ?? '';
   let bracketsLocked = false;
@@ -30,9 +33,9 @@ export async function Header() {
     <header className="site-header">
       <Link href={homeHref} className="site-brand">
         <span className="site-logo-wrap">
-          <img src="/glensmadness.png" alt="Glen" width={56} height={56} className="site-logo" />
+          <img src={brandLogoSrc} alt={brandTitle} width={56} height={56} className="site-logo" />
         </span>
-        <span className="site-title">Glen&apos;s Madness of March</span>
+        <span className="site-title">{brandTitle}</span>
       </Link>
       <Countdown />
       <nav className="site-nav">

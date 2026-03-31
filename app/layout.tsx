@@ -17,13 +17,14 @@ export default async function RootLayout({
   const pathname = headers().get('x-pathname') ?? '';
   const session = await getSession();
   const isContestSelectionScreen = pathname === '/' && !session;
+  const backgroundLogoSrc = session?.contest === 'golf' ? '/Dans_Logo.png' : '/glensmadness.png';
 
   return (
     <html lang="en">
       <body>
         {!isContestSelectionScreen && (
           <div className="bg-logo" aria-hidden>
-            <img src="/glensmadness.png" alt="" />
+            <img src={backgroundLogoSrc} alt="" />
           </div>
         )}
         <div className="page-wrap">
