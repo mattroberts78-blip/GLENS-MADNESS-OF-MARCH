@@ -5,11 +5,11 @@ import { Countdown } from '@/components/Countdown';
 
 export async function Header() {
   const session = await getSession();
-  const homeHref = session?.isAdmin ? '/admin' : '/';
+  const homeHref = session?.isAdmin ? '/admin' : session?.contest === 'golf' ? '/golf' : '/';
 
   let displayName: string = session?.username ?? '';
   let bracketsLocked = false;
-  if (session && !session.isAdmin) {
+  if (session && !session.isAdmin && session.contest === 'basketball') {
     try {
       const row = await sql`
         SELECT c.first_name, c.last_name,
@@ -55,15 +55,21 @@ export async function Header() {
             <span className="nav-link" style={{ cursor: 'default', color: 'var(--text)' }}>
               {displayName}
             </span>
-            {!bracketsLocked && (
+            {session.contest === 'basketball' && !bracketsLocked && (
               <Link href="/?edit=name" className="nav-link" style={{ fontSize: '0.8rem' }}>
                 Change
               </Link>
             )}
-            <Link href="/" className="nav-link">Basketball</Link>
-            <Link href="/golf" className="nav-link">Golf pick'em</Link>
-            <Link href="/" className="nav-link">My brackets</Link>
-            <Link href="/scoreboard" className="nav-link">Scoreboard</Link>
+            {session.contest === 'basketball' ? (
+              <>
+                <Link href="/" className="nav-link">My brackets</Link>
+                <Link href="/scoreboard" className="nav-link">Scoreboard</Link>
+              </>
+            ) : (
+              <>
+                <Link href="/golf" className="nav-link">Golf events</Link>
+              </>
+            )}
           </>
         ) : (
           <>

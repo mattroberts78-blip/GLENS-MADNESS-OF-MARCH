@@ -1,14 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { sql } from '@vercel/postgres';
 import { verifyAdminToken } from '@/lib/auth/admin-token';
+import { getSessionFromRequest } from '@/lib/auth/session';
 
 const PIN_RE = /^\d{4}$/;
 
 export async function POST(request: NextRequest) {
+  const session = getSessionFromRequest(request);
   const formData = await request.formData();
   const token = String(formData.get('_token') ?? '');
 
-  if (!verifyAdminToken(token)) {
+  if (!verifyAdminToken(token) || !session?.isAdmin || session.contest !== 'basketball') {
     return new NextResponse(
       '<html><body><script>parent.postMessage("auth-error","*");</script></body></html>',
       { status: 200, headers: { 'Content-Type': 'text/html' } },

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { sql } from '@vercel/postgres';
 import { verifyAdminToken } from '@/lib/auth/admin-token';
+import { getSessionFromRequest } from '@/lib/auth/session';
 
 type TierPayload = {
   tierNumber: number;
@@ -8,6 +9,7 @@ type TierPayload = {
 };
 
 export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
+  const session = getSessionFromRequest(request);
   const eventId = Number(params.id);
   if (!Number.isFinite(eventId)) return NextResponse.json({ ok: false, error: 'invalid_event' }, { status: 400 });
 
@@ -16,7 +18,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     tiers?: TierPayload[];
   } | null;
 
-  if (!verifyAdminToken(String(body?.token ?? ''))) {
+  if (!verifyAdminToken(String(body?.token ?? '')) || !session?.isAdmin || session.contest !== 'golf') {
     return NextResponse.json({ ok: false, error: 'unauthorized' }, { status: 401 });
   }
   const tiers = body?.tiers ?? [];

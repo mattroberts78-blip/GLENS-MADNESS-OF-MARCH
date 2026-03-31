@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { sql } from '@vercel/postgres';
 import { verifyAdminToken } from '@/lib/auth/admin-token';
+import { getSessionFromRequest } from '@/lib/auth/session';
 
 export async function GET() {
+  // Read-only list for admin UI preload.
   const result = await sql`
     SELECT id, name, starts_at, lock_at, is_active
     FROM golf_events
@@ -12,6 +14,7 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
+  const session = getSessionFromRequest(request);
   const body = (await request.json().catch(() => null)) as {
     token?: string;
     name?: string;
@@ -20,7 +23,7 @@ export async function POST(request: NextRequest) {
     isActive?: boolean;
   } | null;
 
-  if (!verifyAdminToken(String(body?.token ?? ''))) {
+  if (!verifyAdminToken(String(body?.token ?? '')) || !session?.isAdmin || session.contest !== 'golf') {
     return NextResponse.json({ ok: false, error: 'unauthorized' }, { status: 401 });
   }
 

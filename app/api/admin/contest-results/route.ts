@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { sql } from '@vercel/postgres';
 import { verifyAdminToken } from '@/lib/auth/admin-token';
+import { getSessionFromRequest } from '@/lib/auth/session';
 import type { ResultsJson } from '@/lib/scoring';
 
 type SetBody = {
@@ -29,6 +30,7 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
+  const session = getSessionFromRequest(request);
   let body: SetBody;
   try {
     body = (await request.json()) as SetBody;
@@ -37,7 +39,7 @@ export async function POST(request: NextRequest) {
   }
 
   const token = String(body.token ?? '');
-  if (!verifyAdminToken(token)) {
+  if (!verifyAdminToken(token) || !session?.isAdmin || session.contest !== 'basketball') {
     return NextResponse.json({ ok: false, error: 'unauthorized' }, { status: 401 });
   }
 

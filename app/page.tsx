@@ -13,6 +13,15 @@ export default async function HomePage({
   searchParams?: { edit?: string };
 }) {
   const session = await getSession();
+  if (session?.contest === 'golf' && !session.isAdmin) {
+    return (
+      <main className="page-container">
+        <h1 className="page-title">Basketball Challenge</h1>
+        <p className="page-subtitle">You are logged in to golf. Use the golf portal for golf entries.</p>
+        <p><Link href="/golf" className="nav-link nav-link-cta">Go to Golf pick'em</Link></p>
+      </main>
+    );
+  }
 
   if (session && !session.isAdmin) {
     const [credentialRow, entriesResult] = await Promise.all([

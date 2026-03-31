@@ -39,6 +39,7 @@ export function AdminDashboardShell({
   teams,
   dbError,
   golfEvents,
+  contest,
 }: {
   username: string;
   adminToken: string;
@@ -47,12 +48,14 @@ export function AdminDashboardShell({
   teams: TeamRow[];
   dbError: string | null;
   golfEvents: { id: number; name: string }[];
+  contest: 'basketball' | 'golf';
 }) {
-  const [section, setSection] = useState<SectionKey>('participants');
+  const [section, setSection] = useState<SectionKey>(contest === 'golf' ? 'golf' : 'participants');
 
   const renderContent = () => {
     switch (section) {
       case 'participants':
+        if (contest !== 'basketball') return null;
         return (
           <section className="card">
             <h2 className="card-title">Participants</h2>
@@ -66,6 +69,7 @@ export function AdminDashboardShell({
           </section>
         );
       case 'lock':
+        if (contest !== 'basketball') return null;
         return (
           <section className="card">
             <h2 className="card-title">Lock brackets</h2>
@@ -73,6 +77,7 @@ export function AdminDashboardShell({
           </section>
         );
       case 'brackets':
+        if (contest !== 'basketball') return null;
         return (
           <section className="card">
             <h2 className="card-title">Brackets</h2>
@@ -83,6 +88,7 @@ export function AdminDashboardShell({
           </section>
         );
       case 'teams':
+        if (contest !== 'basketball') return null;
         return (
           <section className="card">
             <h2 className="card-title">Tournament teams</h2>
@@ -94,6 +100,7 @@ export function AdminDashboardShell({
           </section>
         );
       case 'golf':
+        if (contest !== 'golf') return null;
         return (
           <section className="card">
             <h2 className="card-title">Golf pick'em</h2>
@@ -102,6 +109,7 @@ export function AdminDashboardShell({
           </section>
         );
       case 'results':
+        if (contest !== 'basketball') return null;
       default:
         return (
           <section className="card">
@@ -141,7 +149,7 @@ export function AdminDashboardShell({
     <main className="page-container" style={{ maxWidth: 1100 }}>
       <h1 className="page-title">Admin</h1>
       <p className="page-subtitle">
-        Glen&apos;s Madness of March — Logged in as <strong>{username}</strong>.
+        {contest === 'golf' ? "Golf Pick'em" : "Glen's Madness of March"} - Logged in as <strong>{username}</strong>.
       </p>
 
       <div
@@ -161,12 +169,17 @@ export function AdminDashboardShell({
           <h2 className="card-title" style={{ marginBottom: '0.75rem' }}>
             Admin menu
           </h2>
-          {navButton('participants', 'Participants')}
-          {navButton('brackets', 'Brackets')}
-          {navButton('lock', 'Lock / unlock')}
-          {navButton('teams', 'Tournament teams')}
-          {navButton('results', 'Game results')}
-          {navButton('golf', 'Golf pick\'em')}
+          {contest === 'basketball' ? (
+            <>
+              {navButton('participants', 'Participants')}
+              {navButton('brackets', 'Brackets')}
+              {navButton('lock', 'Lock / unlock')}
+              {navButton('teams', 'Tournament teams')}
+              {navButton('results', 'Game results')}
+            </>
+          ) : (
+            <>{navButton('golf', 'Golf pick\'em')}</>
+          )}
         </aside>
 
         <div>{renderContent()}</div>

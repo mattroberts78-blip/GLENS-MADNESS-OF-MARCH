@@ -3,15 +3,16 @@ import Link from 'next/link';
 export default function CreateAccountPage({
   searchParams,
 }: {
-  searchParams?: { error?: string };
+  searchParams?: { error?: string; contest?: string };
 }) {
   const error = searchParams?.error;
+  const selectedContest = searchParams?.contest === 'golf' ? 'golf' : 'basketball';
 
   return (
     <main className="page-container" style={{ maxWidth: 420 }}>
       <h1 className="page-title">Create account</h1>
       <p className="page-subtitle">
-        Enter your email and choose a 4-digit PIN. You&apos;ll use these to log in. Select how many brackets you want to play.
+        Choose contest, then create your login with email and 4-digit PIN.
       </p>
 
       {error === 'email' && (
@@ -36,6 +37,19 @@ export default function CreateAccountPage({
       )}
 
       <form action="/api/auth/create-account" method="POST" className="card" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+        <label style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', fontSize: '0.9rem', fontWeight: 500 }}>
+          Contest
+          <div style={{ display: 'flex', gap: '1rem' }}>
+            <label style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
+              <input type="radio" name="contest" value="basketball" defaultChecked={selectedContest === 'basketball'} />
+              Basketball
+            </label>
+            <label style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
+              <input type="radio" name="contest" value="golf" defaultChecked={selectedContest === 'golf'} />
+              Golf
+            </label>
+          </div>
+        </label>
         <label style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', fontSize: '0.9rem', fontWeight: 500 }}>
           Email
           <input
@@ -76,7 +90,7 @@ export default function CreateAccountPage({
           />
         </label>
         <label style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', fontSize: '0.9rem', fontWeight: 500 }}>
-          Number of brackets
+          Number of brackets (basketball only)
           <input
             type="number"
             name="brackets"

@@ -5,7 +5,7 @@ import { getSessionFromRequest } from '@/lib/auth/session';
 export async function POST(request: NextRequest) {
   const session = getSessionFromRequest(request);
 
-  if (!session || session.isAdmin) {
+  if (!session || session.isAdmin || session.contest !== 'basketball') {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { sql } from '@vercel/postgres';
 import { verifyAdminToken } from '@/lib/auth/admin-token';
+import { getSessionFromRequest } from '@/lib/auth/session';
 
 type ScoreRow = {
   golferName: string;
@@ -10,6 +11,7 @@ type ScoreRow = {
 };
 
 export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
+  const session = getSessionFromRequest(request);
   const eventId = Number(params.id);
   if (!Number.isFinite(eventId)) return NextResponse.json({ ok: false, error: 'invalid_event' }, { status: 400 });
 
@@ -18,7 +20,7 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     winnerStrokes?: number | null;
     scores?: ScoreRow[];
   } | null;
-  if (!verifyAdminToken(String(body?.token ?? ''))) {
+  if (!verifyAdminToken(String(body?.token ?? '')) || !session?.isAdmin || session.contest !== 'golf') {
     return NextResponse.json({ ok: false, error: 'unauthorized' }, { status: 401 });
   }
 

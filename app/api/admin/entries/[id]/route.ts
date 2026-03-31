@@ -1,12 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { sql } from '@vercel/postgres';
 import { verifyAdminToken } from '@/lib/auth/admin-token';
+import { getSessionFromRequest } from '@/lib/auth/session';
 
 export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+  const session = getSessionFromRequest(request);
   const url = new URL(request.url);
   const token = url.searchParams.get('_token') ?? '';
 
-  if (!verifyAdminToken(token)) {
+  if (!verifyAdminToken(token) || !session?.isAdmin || session.contest !== 'basketball') {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 

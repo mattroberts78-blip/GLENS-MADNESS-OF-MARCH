@@ -77,7 +77,7 @@ export default async function ScoreboardPage({
   searchParams?: { sort?: string; dir?: string; round?: string };
 }) {
   const session = await getSession();
-  if (!session || session.isAdmin) {
+  if (!session || session.isAdmin || session.contest !== 'basketball') {
     return (
       <main className="page-container">
         <p style={{ marginBottom: '1rem' }}>

@@ -13,6 +13,7 @@ export type Session = {
   credentialId: number;
   username: string;
   isAdmin: boolean;
+  contest: 'basketball' | 'golf';
 };
 
 export const SESSION_COOKIE_NAME = SESSION_COOKIE;

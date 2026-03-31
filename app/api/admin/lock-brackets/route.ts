@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { sql } from '@vercel/postgres';
 import { verifyAdminToken } from '@/lib/auth/admin-token';
+import { getSessionFromRequest } from '@/lib/auth/session';
 
 type Body = {
   token: string;
@@ -9,6 +10,7 @@ type Body = {
 };
 
 export async function POST(request: NextRequest) {
+  const session = getSessionFromRequest(request);
   let body: Body;
   try {
     body = (await request.json()) as Body;
@@ -16,7 +18,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: false, error: 'invalid_json' }, { status: 400 });
   }
 
-  if (!verifyAdminToken(body.token)) {
+  if (!verifyAdminToken(body.token) || !session?.isAdmin || session.contest !== 'basketball') {
     return NextResponse.json({ ok: false, error: 'unauthorized' }, { status: 401 });
   }
 
@@ -27,6 +29,7 @@ export async function POST(request: NextRequest) {
     const adminRow = await sql`
       SELECT password FROM credentials
       WHERE LOWER(TRIM(username)) = 'admin'
+        AND contest_type = 'basketball'
       LIMIT 1
     `;
     const row = adminRow.rows[0] as { password: string } | undefined;

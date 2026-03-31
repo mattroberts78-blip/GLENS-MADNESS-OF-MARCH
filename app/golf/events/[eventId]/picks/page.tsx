@@ -7,7 +7,7 @@ export const dynamic = 'force-dynamic';
 
 export default async function GolfPicksPage({ params }: { params: { eventId: string } }) {
   const session = await getSession();
-  if (!session || session.isAdmin) redirect('/login');
+  if (!session || session.isAdmin || session.contest !== 'golf') redirect('/login?contest=golf');
 
   const eventId = Number(params.eventId);
   if (!Number.isFinite(eventId)) redirect('/golf');

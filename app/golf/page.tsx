@@ -14,11 +14,11 @@ type GolfEvent = {
 
 export default async function GolfHomePage() {
   const session = await getSession();
-  if (!session || session.isAdmin) {
+  if (!session || session.isAdmin || session.contest !== 'golf') {
     return (
       <main className="page-container">
         <h1 className="page-title">Golf Pick'em</h1>
-        <p className="page-subtitle">Log in as a participant to access golf events.</p>
+        <p className="page-subtitle">Log in with a golf account to access golf events.</p>
       </main>
     );
   }

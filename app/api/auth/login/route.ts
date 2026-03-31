@@ -4,14 +4,17 @@ import { sessionCookieForResponse } from '@/lib/auth/session';
 import { signAdminToken } from '@/lib/auth/admin-token';
 
 export async function POST(request: NextRequest) {
+  let contest: 'basketball' | 'golf' = 'basketball';
   try {
     const formData = await request.formData();
     const username = String(formData.get('username') || '').trim();
     const password = String(formData.get('password') || '');
+    contest = String(formData.get('contest') || '').trim().toLowerCase() === 'golf' ? 'golf' : 'basketball';
 
     if (!username || !password) {
       const url = new URL('/login', request.url);
       url.searchParams.set('error', '1');
+      url.searchParams.set('contest', contest);
       return NextResponse.redirect(url, 302);
     }
 
@@ -20,6 +23,7 @@ export async function POST(request: NextRequest) {
              (LOWER(TRIM(username)) = 'admin') AS is_admin
       FROM credentials
       WHERE LOWER(TRIM(username)) = LOWER(${username})
+        AND contest_type = ${contest}
       LIMIT 1
     `;
     const row = result.rows[0] as
@@ -29,6 +33,7 @@ export async function POST(request: NextRequest) {
     if (!row || row.password !== password) {
       const url = new URL('/login', request.url);
       url.searchParams.set('error', '1');
+      url.searchParams.set('contest', contest);
       return NextResponse.redirect(url, 302);
     }
 
@@ -37,9 +42,10 @@ export async function POST(request: NextRequest) {
       credentialId: Number(row.id),
       username: row.username,
       isAdmin,
+      contest,
     };
 
-    const redirectPath = isAdmin ? '/admin' : '/';
+    const redirectPath = isAdmin ? '/admin' : contest === 'golf' ? '/golf' : '/';
     const redirectUrl = new URL(redirectPath, request.url);
 
     if (isAdmin) {
@@ -57,6 +63,7 @@ export async function POST(request: NextRequest) {
     console.error('[login route]', err);
     const url = new URL('/login', request.url);
     url.searchParams.set('error', '1');
+    url.searchParams.set('contest', contest);
     url.searchParams.set('msg', err instanceof Error ? err.message : 'unknown');
     return NextResponse.redirect(url, 302);
   }

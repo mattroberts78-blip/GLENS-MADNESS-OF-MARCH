@@ -13,7 +13,7 @@ export default async function BracketPage({
   params: Promise<{ id: string }>;
 }) {
   const session = await getSession();
-  if (!session || session.isAdmin) redirect('/login');
+  if (!session || session.isAdmin || session.contest !== 'basketball') redirect('/login?contest=basketball');
 
   const { id } = await params;
   const entryId = parseInt(id, 10);
