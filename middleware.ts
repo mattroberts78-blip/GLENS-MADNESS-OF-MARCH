@@ -3,6 +3,7 @@ import { SESSION_COOKIE_NAME, decodeSession } from '@/lib/auth/session';
 
 export function middleware(request: NextRequest) {
   const requestHeaders = new Headers(request.headers);
+  requestHeaders.set('x-pathname', request.nextUrl.pathname);
 
   // Read the raw session cookie from the incoming request.
   const raw = request.cookies.get(SESSION_COOKIE_NAME)?.value;

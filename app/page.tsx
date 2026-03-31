@@ -98,9 +98,6 @@ export default async function HomePage({
         </ul>
         <p style={{ marginTop: '1.5rem' }}>
           <Link href="/scoreboard" className="nav-link nav-link-cta" prefetch={false}>View scoreboard</Link>
-          <Link href="/golf" className="nav-link" prefetch={false} style={{ marginLeft: '0.5rem' }}>
-            Switch to golf pick'em
-          </Link>
         </p>
       </main>
     );
@@ -128,7 +125,7 @@ export default async function HomePage({
         </Link>
         <Link href="/login?contest=golf" className="card" style={{ textDecoration: 'none', color: 'inherit' }}>
           <div style={{ display: 'grid', gap: '0.75rem', justifyItems: 'center' }}>
-            <img src="/dans_logo.png" alt="Dan's Master's Pick'em logo" style={{ width: 92, height: 92, borderRadius: '50%' }} />
+            <img src="/Dans_Logo.png" alt="Dan's Master's Pick'em logo" style={{ width: 92, height: 92, borderRadius: '50%' }} />
             <h2 className="card-title" style={{ margin: 0 }}>Dan&apos;s Master&apos;s Pick&apos;em</h2>
             <p className="page-subtitle" style={{ margin: 0, textAlign: 'center' }}>
               Golf pick&apos;em login
