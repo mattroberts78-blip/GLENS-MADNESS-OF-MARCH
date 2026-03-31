@@ -9,7 +9,18 @@ export async function POST(request: NextRequest) {
     const formData = await request.formData();
     const username = String(formData.get('username') || '').trim();
     const password = String(formData.get('password') || '');
-    contest = String(formData.get('contest') || '').trim().toLowerCase() === 'golf' ? 'golf' : 'basketball';
+    const formContest = String(formData.get('contest') || '').trim().toLowerCase();
+    const referer = request.headers.get('referer');
+    const refererContest = (() => {
+      if (!referer) return '';
+      try {
+        return new URL(referer).searchParams.get('contest')?.trim().toLowerCase() ?? '';
+      } catch {
+        return '';
+      }
+    })();
+    const contestSource = formContest || refererContest;
+    contest = contestSource === 'golf' ? 'golf' : 'basketball';
 
     if (!username || !password) {
       const url = new URL('/login', request.url);
