@@ -8,6 +8,27 @@ type TierPayload = {
   golferNames: string[];
 };
 
+export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+  const session = getSessionFromRequest(request);
+  const token = request.nextUrl.searchParams.get('token') ?? '';
+  const eventId = Number(params.id);
+  if (!Number.isFinite(eventId)) return NextResponse.json({ ok: false, error: 'invalid_event' }, { status: 400 });
+  if (!verifyAdminToken(String(token)) || !session?.isAdmin || session.contest !== 'golf') {
+    return NextResponse.json({ ok: false, error: 'unauthorized' }, { status: 401 });
+  }
+
+  const rows = await sql`
+    SELECT t.tier_number, g.name AS golfer_name
+    FROM golf_tiers t
+    LEFT JOIN golf_event_tier_golfers etg ON etg.tier_id = t.id
+    LEFT JOIN golf_golfers g ON g.id = etg.golfer_id
+    WHERE t.event_id = ${eventId}
+    ORDER BY t.tier_number ASC, g.name ASC
+  `;
+
+  return NextResponse.json({ ok: true, rows: rows.rows });
+}
+
 export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
   const session = getSessionFromRequest(request);
   const eventId = Number(params.id);

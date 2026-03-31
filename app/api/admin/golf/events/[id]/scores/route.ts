@@ -10,6 +10,33 @@ type ScoreRow = {
   madeCut: boolean;
 };
 
+export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+  const session = getSessionFromRequest(request);
+  const token = request.nextUrl.searchParams.get('token') ?? '';
+  const eventId = Number(params.id);
+  if (!Number.isFinite(eventId)) return NextResponse.json({ ok: false, error: 'invalid_event' }, { status: 400 });
+  if (!verifyAdminToken(String(token)) || !session?.isAdmin || session.contest !== 'golf') {
+    return NextResponse.json({ ok: false, error: 'unauthorized' }, { status: 401 });
+  }
+
+  const [scores, eventRow] = await Promise.all([
+    sql`
+      SELECT g.name AS golfer_name, s.round_num AS round, s.strokes, s.made_cut
+      FROM golf_round_scores s
+      JOIN golf_golfers g ON g.id = s.golfer_id
+      WHERE s.event_id = ${eventId}
+      ORDER BY g.name ASC, s.round_num ASC
+    `,
+    sql`SELECT winner_strokes FROM golf_events WHERE id = ${eventId} LIMIT 1`,
+  ]);
+
+  return NextResponse.json({
+    ok: true,
+    scores: scores.rows,
+    winnerStrokes: (eventRow.rows[0] as { winner_strokes: number | null } | undefined)?.winner_strokes ?? null,
+  });
+}
+
 export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
   const session = getSessionFromRequest(request);
   const eventId = Number(params.id);
