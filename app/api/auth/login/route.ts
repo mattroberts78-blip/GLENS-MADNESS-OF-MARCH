@@ -18,14 +18,38 @@ export async function POST(request: NextRequest) {
       return NextResponse.redirect(url, 302);
     }
 
-    const result = await sql`
-      SELECT id, username, password,
-             (LOWER(TRIM(username)) = 'admin') AS is_admin
-      FROM credentials
-      WHERE LOWER(TRIM(username)) = LOWER(${username})
-        AND contest_type = ${contest}
-      LIMIT 1
-    `;
+    let result;
+    try {
+      result = await sql`
+        SELECT id, username, password,
+               (LOWER(TRIM(username)) = 'admin') AS is_admin
+        FROM credentials
+        WHERE LOWER(TRIM(username)) = LOWER(${username})
+          AND contest_type = ${contest}
+        LIMIT 1
+      `;
+    } catch (queryErr: unknown) {
+      // Backward compatibility: if migration wasn't applied yet, credentials has no contest_type.
+      const err = queryErr as { code?: string };
+      if (err?.code === '42703') {
+        if (contest !== 'basketball') {
+          const url = new URL('/login', request.url);
+          url.searchParams.set('error', '1');
+          url.searchParams.set('contest', contest);
+          url.searchParams.set('msg', 'golf_not_migrated');
+          return NextResponse.redirect(url, 302);
+        }
+        result = await sql`
+          SELECT id, username, password,
+                 (LOWER(TRIM(username)) = 'admin') AS is_admin
+          FROM credentials
+          WHERE LOWER(TRIM(username)) = LOWER(${username})
+          LIMIT 1
+        `;
+      } else {
+        throw queryErr;
+      }
+    }
     const row = result.rows[0] as
       | { id: number; username: string; password: string; is_admin: unknown }
       | undefined;
