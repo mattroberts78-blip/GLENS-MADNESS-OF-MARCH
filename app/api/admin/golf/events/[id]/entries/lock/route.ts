@@ -26,21 +26,29 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
 
   let result;
   if (mode === 'selected' && entryIds.length > 0) {
+    let updated = 0;
     if (action === 'lock') {
-      result = await sql`
-        UPDATE golf_entries
-        SET locked_at = NOW()
-        WHERE event_id = ${eventId}
-          AND id = ANY(${entryIds})
-      `;
+      for (const entryId of entryIds) {
+        const r = await sql`
+          UPDATE golf_entries
+          SET locked_at = NOW()
+          WHERE event_id = ${eventId}
+            AND id = ${entryId}
+        `;
+        updated += r.rowCount ?? 0;
+      }
     } else {
-      result = await sql`
-        UPDATE golf_entries
-        SET locked_at = NULL
-        WHERE event_id = ${eventId}
-          AND id = ANY(${entryIds})
-      `;
+      for (const entryId of entryIds) {
+        const r = await sql`
+          UPDATE golf_entries
+          SET locked_at = NULL
+          WHERE event_id = ${eventId}
+            AND id = ${entryId}
+        `;
+        updated += r.rowCount ?? 0;
+      }
     }
+    return NextResponse.json({ ok: true, updated });
   } else {
     if (action === 'lock') {
       result = await sql`UPDATE golf_entries SET locked_at = NOW() WHERE event_id = ${eventId}`;

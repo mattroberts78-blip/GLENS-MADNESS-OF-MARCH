@@ -170,16 +170,16 @@ export function GolfAdminPanel({ adminToken, events }: { adminToken: string; eve
         golferNames: (tiers[tierNumber] ?? []).map((g) => g.name.trim()).filter(Boolean),
       };
     });
-    const res = await fetch(`/api/admin/golf/events/${eventId}/tiers`, {
+    const tiersRes = await fetch(`/api/admin/golf/events/${eventId}/tiers`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ token: adminToken, tiers: tiersPayload }),
     });
-    if (!res.ok) {
+    if (!tiersRes.ok) {
       setMsg('Failed to save tiers.');
       return;
     }
-    const scores = [];
+    const scores: { golferName: string; round: 1 | 2 | 3 | 4; strokes: number; madeCut: boolean }[] = [];
     for (let tierNumber = 1; tierNumber <= 9; tierNumber += 1) {
       for (const golfer of tiers[tierNumber] ?? []) {
         const name = golfer.name.trim();
@@ -195,7 +195,7 @@ export function GolfAdminPanel({ adminToken, events }: { adminToken: string; eve
         });
       }
     }
-    const res = await fetch(`/api/admin/golf/events/${eventId}/scores`, {
+    const scoresRes = await fetch(`/api/admin/golf/events/${eventId}/scores`, {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({
@@ -204,7 +204,7 @@ export function GolfAdminPanel({ adminToken, events }: { adminToken: string; eve
         scores: scores,
       }),
     });
-    setMsg(res.ok ? 'Tournament info saved.' : 'Failed to save round scores.');
+    setMsg(scoresRes.ok ? 'Tournament info saved.' : 'Failed to save round scores.');
   }
 
   return (
