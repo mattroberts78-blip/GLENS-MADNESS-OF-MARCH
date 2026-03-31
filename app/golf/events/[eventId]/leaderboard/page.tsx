@@ -11,25 +11,51 @@ export default async function GolfLeaderboardPage({ params }: { params: { eventI
 
   const [eventResult, rowsResult, roundScoresResult] = await Promise.all([
     sql`SELECT id, name, winner_strokes FROM golf_events WHERE id = ${eventId} LIMIT 1`,
-    sql`
-      SELECT
-        e.id AS entry_id,
-        e.submitted_at,
-        e.tiebreaker_winner_strokes,
-        c.username,
-        c.first_name,
-        c.last_name,
-        t.tier_number,
-        g.id AS golfer_id,
-        g.name AS golfer_name
-      FROM golf_entries e
-      JOIN credentials c ON c.id = e.credential_id
-      LEFT JOIN golf_entry_picks p ON p.entry_id = e.id
-      LEFT JOIN golf_tiers t ON t.id = p.tier_id
-      LEFT JOIN golf_golfers g ON g.id = p.golfer_id
-      WHERE e.event_id = ${eventId}
-      ORDER BY e.id ASC, t.tier_number ASC NULLS LAST
-    `,
+    (async () => {
+      try {
+        return await sql`
+          SELECT
+            e.id AS entry_id,
+            e.submitted_at,
+            e.tiebreaker_winner_strokes,
+            c.username,
+            c.first_name,
+            c.last_name,
+            t.tier_number,
+            g.id AS golfer_id,
+            g.name AS golfer_name
+          FROM golf_entries e
+          JOIN credentials c ON c.id = e.credential_id
+          LEFT JOIN golf_entry_picks p ON p.entry_id = e.id
+          LEFT JOIN golf_tiers t ON t.id = p.tier_id
+          LEFT JOIN golf_golfers g ON g.id = p.golfer_id
+          WHERE e.event_id = ${eventId}
+          ORDER BY e.id ASC, t.tier_number ASC NULLS LAST
+        `;
+      } catch (err) {
+        const pg = err as { code?: string };
+        if (pg?.code !== '42703') throw err;
+        return sql`
+          SELECT
+            e.id AS entry_id,
+            NULL::timestamptz AS submitted_at,
+            e.tiebreaker_winner_strokes,
+            c.username,
+            c.first_name,
+            c.last_name,
+            t.tier_number,
+            g.id AS golfer_id,
+            g.name AS golfer_name
+          FROM golf_entries e
+          JOIN credentials c ON c.id = e.credential_id
+          LEFT JOIN golf_entry_picks p ON p.entry_id = e.id
+          LEFT JOIN golf_tiers t ON t.id = p.tier_id
+          LEFT JOIN golf_golfers g ON g.id = p.golfer_id
+          WHERE e.event_id = ${eventId}
+          ORDER BY e.id ASC, t.tier_number ASC NULLS LAST
+        `;
+      }
+    })(),
     sql`
       SELECT golfer_id, round_num AS round, strokes, made_cut
       FROM golf_round_scores

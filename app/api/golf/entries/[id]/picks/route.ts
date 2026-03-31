@@ -22,13 +22,26 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
   const picks = Array.isArray(body?.picks) ? body!.picks : [];
   const tiebreaker = body?.tiebreakerWinnerStrokes;
 
-  const meta = await sql`
-    SELECT e.id, e.submitted_at, ge.lock_at AS event_lock, e.locked_at AS entry_lock, e.event_id
-    FROM golf_entries e
-    JOIN golf_events ge ON ge.id = e.event_id
-    WHERE e.id = ${entryId} AND e.credential_id = ${session.credentialId}
-    LIMIT 1
-  `;
+  let meta;
+  try {
+    meta = await sql`
+      SELECT e.id, e.submitted_at, ge.lock_at AS event_lock, e.locked_at AS entry_lock, e.event_id
+      FROM golf_entries e
+      JOIN golf_events ge ON ge.id = e.event_id
+      WHERE e.id = ${entryId} AND e.credential_id = ${session.credentialId}
+      LIMIT 1
+    `;
+  } catch (err) {
+    const pg = err as { code?: string };
+    if (pg?.code !== '42703') throw err;
+    meta = await sql`
+      SELECT e.id, NULL::timestamptz AS submitted_at, ge.lock_at AS event_lock, NULL::timestamptz AS entry_lock, e.event_id
+      FROM golf_entries e
+      JOIN golf_events ge ON ge.id = e.event_id
+      WHERE e.id = ${entryId} AND e.credential_id = ${session.credentialId}
+      LIMIT 1
+    `;
+  }
   const row = meta.rows[0] as
     | {
         id: number;

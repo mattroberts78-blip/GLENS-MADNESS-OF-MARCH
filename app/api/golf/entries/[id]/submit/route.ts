@@ -13,13 +13,26 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     return NextResponse.json({ ok: false, error: 'invalid_entry_id' }, { status: 400 });
   }
 
-  const row = await sql`
-    SELECT e.id, e.event_id, ge.lock_at AS event_lock, e.locked_at AS entry_lock
-    FROM golf_entries e
-    JOIN golf_events ge ON ge.id = e.event_id
-    WHERE e.id = ${entryId} AND e.credential_id = ${session.credentialId}
-    LIMIT 1
-  `;
+  let row;
+  try {
+    row = await sql`
+      SELECT e.id, e.event_id, ge.lock_at AS event_lock, e.locked_at AS entry_lock
+      FROM golf_entries e
+      JOIN golf_events ge ON ge.id = e.event_id
+      WHERE e.id = ${entryId} AND e.credential_id = ${session.credentialId}
+      LIMIT 1
+    `;
+  } catch (err) {
+    const pg = err as { code?: string };
+    if (pg?.code !== '42703') throw err;
+    row = await sql`
+      SELECT e.id, e.event_id, ge.lock_at AS event_lock, NULL::timestamptz AS entry_lock
+      FROM golf_entries e
+      JOIN golf_events ge ON ge.id = e.event_id
+      WHERE e.id = ${entryId} AND e.credential_id = ${session.credentialId}
+      LIMIT 1
+    `;
+  }
   const entry = row.rows[0] as
     | { id: number; event_id: number; event_lock: string | null; entry_lock: string | null }
     | undefined;
@@ -50,11 +63,21 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     return NextResponse.json({ ok: false, error: 'need_tiebreaker' }, { status: 400 });
   }
 
-  await sql`
-    UPDATE golf_entries
-    SET submitted_at = NOW(), picks_complete = true, updated_at = NOW()
-    WHERE id = ${entryId}
-  `;
+  try {
+    await sql`
+      UPDATE golf_entries
+      SET submitted_at = NOW(), picks_complete = true, updated_at = NOW()
+      WHERE id = ${entryId}
+    `;
+  } catch (err) {
+    const pg = err as { code?: string };
+    if (pg?.code !== '42703') throw err;
+    await sql`
+      UPDATE golf_entries
+      SET picks_complete = true, updated_at = NOW()
+      WHERE id = ${entryId}
+    `;
+  }
 
   return NextResponse.json({ ok: true });
 }

@@ -30,12 +30,28 @@ export default async function GolfPicksPage({
       ORDER BY t.tier_number ASC, g.name ASC
     `,
     sql`SELECT first_name, last_name FROM credentials WHERE id = ${session.credentialId} LIMIT 1`,
-    sql`
-      SELECT id, tiebreaker_winner_strokes, submitted_at, locked_at
-      FROM golf_entries
-      WHERE credential_id = ${session.credentialId} AND event_id = ${eventId}
-      LIMIT 1
-    `,
+    (async () => {
+      try {
+        return await sql`
+          SELECT id, tiebreaker_winner_strokes, submitted_at, locked_at
+          FROM golf_entries
+          WHERE credential_id = ${session.credentialId} AND event_id = ${eventId}
+          LIMIT 1
+        `;
+      } catch (err) {
+        const pg = err as { code?: string };
+        // Backward compatible with DBs that do not yet have submitted_at/locked_at.
+        if (pg?.code === '42703') {
+          return sql`
+            SELECT id, tiebreaker_winner_strokes, NULL::timestamptz AS submitted_at, NULL::timestamptz AS locked_at
+            FROM golf_entries
+            WHERE credential_id = ${session.credentialId} AND event_id = ${eventId}
+            LIMIT 1
+          `;
+        }
+        throw err;
+      }
+    })(),
   ]);
 
   const event = eventResult.rows[0] as { id: number; name: string; lock_at: string | null } | undefined;
