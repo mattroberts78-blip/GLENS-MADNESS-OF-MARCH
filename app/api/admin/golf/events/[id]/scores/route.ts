@@ -56,12 +56,22 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
   }
 
   for (const row of body?.scores ?? []) {
-    const golfer = await sql`SELECT id FROM golf_golfers WHERE name = ${row.golferName} LIMIT 1`;
+    const name = String(row.golferName ?? '').trim();
+    if (!name) continue;
+    const golfer = await sql`
+      SELECT id FROM golf_golfers
+      WHERE LOWER(TRIM(name)) = LOWER(${name})
+      LIMIT 1
+    `;
     const golferId = (golfer.rows[0] as { id: number } | undefined)?.id;
     if (!golferId) continue;
+    const strokes = Number(row.strokes);
+    if (!Number.isFinite(strokes)) continue;
+    const roundNum = Number(row.round);
+    if (roundNum !== 1 && roundNum !== 2 && roundNum !== 3 && roundNum !== 4) continue;
     await sql`
       INSERT INTO golf_round_scores (event_id, golfer_id, round_num, strokes, made_cut)
-      VALUES (${eventId}, ${golferId}, ${row.round}, ${row.strokes}, ${row.madeCut})
+      VALUES (${eventId}, ${golferId}, ${roundNum}, ${strokes}, ${row.madeCut})
       ON CONFLICT (event_id, golfer_id, round_num)
       DO UPDATE SET strokes = EXCLUDED.strokes, made_cut = EXCLUDED.made_cut, updated_at = NOW()
     `;

@@ -1,5 +1,6 @@
 import { sql } from '@vercel/postgres';
 import { redirect } from 'next/navigation';
+import { normalizeGolfRoundNum } from '@/lib/golf/normalizeRound';
 import { scoreGolfEntries } from '@/lib/golf/scoring';
 import { GolfLeaderboardTable, type GolfLeaderboardRow } from '@/components/golf/GolfLeaderboardTable';
 
@@ -78,16 +79,26 @@ export default async function GolfLeaderboardPage({ params }: { params: { eventI
     golfer_name: string | null;
   }[];
 
-  const roundRows = roundScoresResult.rows as {
+  const roundRowsRaw = roundScoresResult.rows as {
     golfer_id: number;
     round: number;
     strokes: number | null;
     made_cut: boolean;
   }[];
 
+  const roundRows = roundRowsRaw
+    .map((r) => {
+      const round = normalizeGolfRoundNum(r.round);
+      if (round == null) return null;
+      const golfer_id = Number(r.golfer_id);
+      if (!Number.isFinite(golfer_id)) return null;
+      return { golfer_id, round, strokes: r.strokes, made_cut: r.made_cut };
+    })
+    .filter((r): r is NonNullable<typeof r> => r != null);
+
   const roundScoresForEngine = roundRows.map((r) => ({
     golferId: r.golfer_id,
-    round: r.round as 1 | 2 | 3 | 4,
+    round: r.round,
     strokes: r.strokes,
     madeCut: r.made_cut,
   }));
@@ -114,11 +125,13 @@ export default async function GolfLeaderboardPage({ params }: { params: { eventI
       });
     }
     if (row.golfer_id != null && row.tier_number != null && row.golfer_name != null) {
+      const gid = Number(row.golfer_id);
+      if (!Number.isFinite(gid)) continue;
       const agg = byEntry.get(row.entry_id)!;
-      agg.picks.push(row.golfer_id);
+      agg.picks.push(gid);
       agg.pickRows.push({
         tierNumber: row.tier_number,
-        golferId: row.golfer_id,
+        golferId: gid,
         golferName: row.golfer_name,
       });
     }

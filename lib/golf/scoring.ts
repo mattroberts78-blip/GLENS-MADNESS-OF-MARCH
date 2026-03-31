@@ -1,3 +1,5 @@
+import { normalizeGolfRoundNum } from '@/lib/golf/normalizeRound';
+
 export type GolfRoundScore = {
   golferId: number;
   round: 1 | 2 | 3 | 4;
@@ -42,8 +44,17 @@ export function scoreGolfEntries(
   roundScores: GolfRoundScore[],
   winnerStrokes: number | null
 ): GolfEntryScoreResult[] {
-  const byGolfer = new Map<number, GolfRoundScore[]>();
+  const normalizedRows: GolfRoundScore[] = [];
   for (const row of roundScores) {
+    const round = normalizeGolfRoundNum(row.round);
+    if (round == null) continue;
+    const golferId = Number(row.golferId);
+    if (!Number.isFinite(golferId)) continue;
+    normalizedRows.push({ ...row, golferId, round });
+  }
+
+  const byGolfer = new Map<number, GolfRoundScore[]>();
+  for (const row of normalizedRows) {
     if (!byGolfer.has(row.golferId)) byGolfer.set(row.golferId, []);
     byGolfer.get(row.golferId)!.push(row);
   }

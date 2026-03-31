@@ -96,10 +96,11 @@ export function GolfAdminPanel({ adminToken, events }: { adminToken: string; eve
         for (const s of data.scores ?? []) {
           if (!scoreMap.has(s.golfer_name)) scoreMap.set(s.golfer_name, {});
           const rec = scoreMap.get(s.golfer_name)!;
-          if (s.round === 1) rec.r1 = s.strokes == null ? '' : String(s.strokes);
-          if (s.round === 2) rec.r2 = s.strokes == null ? '' : String(s.strokes);
-          if (s.round === 3) rec.r3 = s.strokes == null ? '' : String(s.strokes);
-          if (s.round === 4) rec.r4 = s.strokes == null ? '' : String(s.strokes);
+          const rn = Number(s.round);
+          if (rn === 1) rec.r1 = s.strokes == null ? '' : String(s.strokes);
+          if (rn === 2) rec.r2 = s.strokes == null ? '' : String(s.strokes);
+          if (rn === 3) rec.r3 = s.strokes == null ? '' : String(s.strokes);
+          if (rn === 4) rec.r4 = s.strokes == null ? '' : String(s.strokes);
         }
       }
       if (tiersRes.ok) {
