@@ -107,19 +107,35 @@ export default async function HomePage({
   }
 
   return (
-    <main className="page-container">
-      <h1 className="page-title">Glen&apos;s Madness of March</h1>
-      <p className="page-subtitle">
-        NCAA March Madness bracket contest — fill out your picks and follow the standings.
-      </p>
-      <nav style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
-        <Link href="/create-account" className="btn btn-primary">
-          Create account
+    <main className="page-container" style={{ maxWidth: 960 }}>
+      <h1 className="page-title">Choose Your Contest</h1>
+      <p className="page-subtitle">Select a contest to continue to the correct login page.</p>
+      <section
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
+          gap: '1rem',
+        }}
+      >
+        <Link href="/login?contest=basketball" className="card" style={{ textDecoration: 'none', color: 'inherit' }}>
+          <div style={{ display: 'grid', gap: '0.75rem', justifyItems: 'center' }}>
+            <img src="/glensmadness.png" alt="Glen's Madness of March logo" style={{ width: 92, height: 92, borderRadius: '50%' }} />
+            <h2 className="card-title" style={{ margin: 0 }}>Glen&apos;s Madness of March</h2>
+            <p className="page-subtitle" style={{ margin: 0, textAlign: 'center' }}>
+              Basketball challenge login
+            </p>
+          </div>
         </Link>
-        <Link href="/login" className="btn btn-secondary">
-          Log in
+        <Link href="/login?contest=golf" className="card" style={{ textDecoration: 'none', color: 'inherit' }}>
+          <div style={{ display: 'grid', gap: '0.75rem', justifyItems: 'center' }}>
+            <img src="/dans_logo.png" alt="Dan's Master's Pick'em logo" style={{ width: 92, height: 92, borderRadius: '50%' }} />
+            <h2 className="card-title" style={{ margin: 0 }}>Dan&apos;s Master&apos;s Pick&apos;em</h2>
+            <p className="page-subtitle" style={{ margin: 0, textAlign: 'center' }}>
+              Golf pick&apos;em login
+            </p>
+          </div>
         </Link>
-      </nav>
+      </section>
     </main>
   );
 }

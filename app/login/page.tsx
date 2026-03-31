@@ -1,3 +1,5 @@
+import Link from 'next/link';
+
 export default function LoginPage({
   searchParams,
 }: {
@@ -11,7 +13,8 @@ export default function LoginPage({
     <main className="page-container" style={{ maxWidth: 420 }}>
       <h1 className="page-title">Log in</h1>
       <p className="page-subtitle">
-        Choose contest first. Participants use email + PIN. Each contest has separate user/admin accounts.
+        {selectedContest === 'golf' ? "Dan's Master's Pick'em" : "Glen's Madness of March"} login.
+        Participants use email + PIN. Admins use their contest-specific admin credentials.
       </p>
       {sessionExpired && (
         <p style={{ color: 'var(--error)', marginBottom: '1rem', fontSize: '0.9rem' }}>
@@ -24,19 +27,7 @@ export default function LoginPage({
         </p>
       )}
       <form action="/api/auth/login" method="POST" className="card" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-        <label style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', fontSize: '0.9rem', fontWeight: 500 }}>
-          Contest
-          <div style={{ display: 'flex', gap: '1rem' }}>
-            <label style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
-              <input type="radio" name="contest" value="basketball" defaultChecked={selectedContest === 'basketball'} />
-              Basketball
-            </label>
-            <label style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
-              <input type="radio" name="contest" value="golf" defaultChecked={selectedContest === 'golf'} />
-              Golf
-            </label>
-          </div>
-        </label>
+        <input type="hidden" name="contest" value={selectedContest} />
         <label style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', fontSize: '0.9rem', fontWeight: 500 }}>
           Email or admin username
           <input type="text" name="username" autoComplete="username" placeholder="you@example.com or admin" className="input" />
@@ -49,6 +40,9 @@ export default function LoginPage({
           Log in
         </button>
       </form>
+      <p style={{ marginTop: '1rem', fontSize: '0.9rem', color: 'var(--text-muted)' }}>
+        <Link href="/" className="nav-link">Back to contest selection</Link>
+      </p>
     </main>
   );
 }
