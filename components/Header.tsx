@@ -60,6 +60,8 @@ export async function Header() {
                 Change
               </Link>
             )}
+            <Link href="/" className="nav-link">Basketball</Link>
+            <Link href="/golf" className="nav-link">Golf pick'em</Link>
             <Link href="/" className="nav-link">My brackets</Link>
             <Link href="/scoreboard" className="nav-link">Scoreboard</Link>
           </>

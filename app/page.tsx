@@ -89,6 +89,9 @@ export default async function HomePage({
         </ul>
         <p style={{ marginTop: '1.5rem' }}>
           <Link href="/scoreboard" className="nav-link nav-link-cta" prefetch={false}>View scoreboard</Link>
+          <Link href="/golf" className="nav-link" prefetch={false} style={{ marginLeft: '0.5rem' }}>
+            Switch to golf pick'em
+          </Link>
         </p>
       </main>
     );

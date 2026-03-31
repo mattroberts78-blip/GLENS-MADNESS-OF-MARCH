@@ -9,6 +9,7 @@
     "lint": "next lint",
     "db:push": "tsx scripts/db-push.ts",
     "db:seed": "tsx scripts/seed-credentials.ts",
+    "test:golf-scoring": "tsx scripts/test-golf-scoring.ts",
     "load-test:seed": "tsx scripts/seed-load-test-users.ts",
     "load-test:seed:recreate": "tsx scripts/seed-load-test-users.ts --recreate",
     "load-test": "k6 run load-test/k6.js"

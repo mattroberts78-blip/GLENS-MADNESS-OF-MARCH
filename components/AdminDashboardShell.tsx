@@ -6,6 +6,7 @@ import { TeamsAdmin } from '@/components/TeamsAdmin';
 import { AdminResultsBracket } from '@/components/AdminResultsBracket';
 import { LockBracketsAdmin } from '@/components/LockBracketsAdmin';
 import { BracketsAdmin } from '@/components/BracketsAdmin';
+import { GolfAdminPanel } from '@/components/GolfAdminPanel';
 
 type Participant = {
   id: number;
@@ -28,7 +29,7 @@ type EntryRow = {
   picks_complete: boolean | null;
 };
 
-type SectionKey = 'participants' | 'brackets' | 'lock' | 'teams' | 'results';
+type SectionKey = 'participants' | 'brackets' | 'lock' | 'teams' | 'results' | 'golf';
 
 export function AdminDashboardShell({
   username,
@@ -37,6 +38,7 @@ export function AdminDashboardShell({
   entries,
   teams,
   dbError,
+  golfEvents,
 }: {
   username: string;
   adminToken: string;
@@ -44,6 +46,7 @@ export function AdminDashboardShell({
   entries: EntryRow[];
   teams: TeamRow[];
   dbError: string | null;
+  golfEvents: { id: number; name: string }[];
 }) {
   const [section, setSection] = useState<SectionKey>('participants');
 
@@ -88,6 +91,14 @@ export function AdminDashboardShell({
               <code>teams</code> table in Neon.
             </p>
             <TeamsAdmin adminToken={adminToken} initialTeams={teams} />
+          </section>
+        );
+      case 'golf':
+        return (
+          <section className="card">
+            <h2 className="card-title">Golf pick'em</h2>
+            <p className="page-subtitle">Create golf events, assign 9 tiers, and upload round scoring.</p>
+            <GolfAdminPanel adminToken={adminToken} events={golfEvents} />
           </section>
         );
       case 'results':
@@ -155,6 +166,7 @@ export function AdminDashboardShell({
           {navButton('lock', 'Lock / unlock')}
           {navButton('teams', 'Tournament teams')}
           {navButton('results', 'Game results')}
+          {navButton('golf', 'Golf pick\'em')}
         </aside>
 
         <div>{renderContent()}</div>

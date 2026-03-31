@@ -42,6 +42,7 @@ export default async function AdminPage({
     seed: number;
     name: string | null;
   }[] = [];
+  let golfEvents: { id: number; name: string }[] = [];
 
   try {
     const participantsResult = await sql`
@@ -80,6 +81,12 @@ export default async function AdminPage({
       `;
       teams = teamsResult.rows as typeof teams;
     }
+    const golfEventsResult = await sql`
+      SELECT id, name
+      FROM golf_events
+      ORDER BY starts_at DESC NULLS LAST, id DESC
+    `;
+    golfEvents = golfEventsResult.rows as typeof golfEvents;
   } catch (err: unknown) {
     console.error('[admin page]', err);
     dbError = err instanceof Error ? err.message : 'Unknown database error';
@@ -92,6 +99,7 @@ export default async function AdminPage({
       participants={participants}
       entries={entries}
       teams={teams}
+      golfEvents={golfEvents}
       dbError={dbError}
     />
   );

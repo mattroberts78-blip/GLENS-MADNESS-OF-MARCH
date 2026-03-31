@@ -2,7 +2,7 @@
  * Run schema.sql against the database.
  * Loads .env.local so POSTGRES_URL is available when running locally.
  */
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { config } from 'dotenv';
 import { sql } from '@vercel/postgres';
@@ -14,22 +14,20 @@ config();
 const schemaPath = join(process.cwd(), 'lib', 'db', 'schema.sql');
 const schema = readFileSync(schemaPath, 'utf-8');
 
-const migrationPath = join(process.cwd(), 'lib', 'db', 'migrations', 'add_payment_verified.sql');
-let migration = '';
-try {
-  migration = readFileSync(migrationPath, 'utf-8');
-} catch {
-  // optional migration
-}
+const migrationsDir = join(process.cwd(), 'lib', 'db', 'migrations');
+const migrations = readdirSync(migrationsDir)
+  .filter((name) => name.endsWith('.sql'))
+  .sort()
+  .map((name) => readFileSync(join(migrationsDir, name), 'utf-8'));
 
 const statements = schema
   .split(/;\s*\n/)
   .map((s) => s.replace(/--[^\n]*/g, '').trim())
   .filter(Boolean);
 
-const migrationStatements = migration
-  ? migration.split(/;\s*\n/).map((s) => s.replace(/--[^\n]*/g, '').trim()).filter(Boolean)
-  : [];
+const migrationStatements = migrations.flatMap((migration) =>
+  migration.split(/;\s*\n/).map((s) => s.replace(/--[^\n]*/g, '').trim()).filter(Boolean)
+);
 
 async function main() {
   if (!process.env.POSTGRES_URL) {
