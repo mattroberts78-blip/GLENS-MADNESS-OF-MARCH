@@ -27,6 +27,13 @@ type GolferModel = {
 };
 
 const TIER_LABELS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I'] as const;
+const MIN_ROWS_PER_TIER = 5;
+const blankGolfer = (): GolferModel => ({ name: '', r1: '', r2: '', r3: '', r4: '' });
+
+function withMinimumRows(rows: GolferModel[], min = MIN_ROWS_PER_TIER): GolferModel[] {
+  if (rows.length >= min) return rows;
+  return [...rows, ...Array.from({ length: min - rows.length }, () => blankGolfer())];
+}
 
 export function GolfAdminPanel({ adminToken, events }: { adminToken: string; events: GolfEvent[] }) {
   const [section, setSection] = useState<SectionKey>('participants');
@@ -37,7 +44,15 @@ export function GolfAdminPanel({ adminToken, events }: { adminToken: string; eve
   const [entries, setEntries] = useState<EntryRow[]>([]);
   const [selectedEntryIds, setSelectedEntryIds] = useState<Set<number>>(new Set());
   const [tiers, setTiers] = useState<Record<number, GolferModel[]>>({
-    1: [], 2: [], 3: [], 4: [], 5: [], 6: [], 7: [], 8: [], 9: [],
+    1: withMinimumRows([]),
+    2: withMinimumRows([]),
+    3: withMinimumRows([]),
+    4: withMinimumRows([]),
+    5: withMinimumRows([]),
+    6: withMinimumRows([]),
+    7: withMinimumRows([]),
+    8: withMinimumRows([]),
+    9: withMinimumRows([]),
   });
   const [msg, setMsg] = useState('');
 
@@ -63,7 +78,17 @@ export function GolfAdminPanel({ adminToken, events }: { adminToken: string; eve
         setParticipants(data.participants ?? []);
         setEntries(data.entries ?? []);
       }
-      const next: Record<number, GolferModel[]> = { 1: [], 2: [], 3: [], 4: [], 5: [], 6: [], 7: [], 8: [], 9: [] };
+      const next: Record<number, GolferModel[]> = {
+        1: [],
+        2: [],
+        3: [],
+        4: [],
+        5: [],
+        6: [],
+        7: [],
+        8: [],
+        9: [],
+      };
       const scoreMap = new Map<string, Partial<GolferModel>>();
       if (scoresRes.ok) {
         const data = await scoresRes.json();
@@ -92,6 +117,9 @@ export function GolfAdminPanel({ adminToken, events }: { adminToken: string; eve
             r4: scores.r4 ?? '',
           });
         }
+      }
+      for (let i = 1; i <= 9; i += 1) {
+        next[i] = withMinimumRows(next[i] ?? []);
       }
       setTiers(next);
       setSelectedEntryIds(new Set());
@@ -158,8 +186,18 @@ export function GolfAdminPanel({ adminToken, events }: { adminToken: string; eve
   function addGolfer(tierNumber: number) {
     setTiers((prev) => ({
       ...prev,
-      [tierNumber]: [...(prev[tierNumber] ?? []), { name: '', r1: '', r2: '', r3: '', r4: '' }],
+      [tierNumber]: [...(prev[tierNumber] ?? []), blankGolfer()],
     }));
+  }
+
+  function deleteGolfer(tierNumber: number, idx: number) {
+    setTiers((prev) => {
+      const next = { ...prev };
+      const rows = [...(next[tierNumber] ?? [])];
+      rows.splice(idx, 1);
+      next[tierNumber] = withMinimumRows(rows);
+      return next;
+    });
   }
 
   async function saveTournamentInfo() {
@@ -347,6 +385,7 @@ export function GolfAdminPanel({ adminToken, events }: { adminToken: string; eve
                         <th style={{ textAlign: 'right', padding: '0.4rem' }}>R3</th>
                         <th style={{ textAlign: 'right', padding: '0.4rem' }}>R4</th>
                         <th style={{ textAlign: 'right', padding: '0.4rem' }}>Overall</th>
+                        <th style={{ textAlign: 'right', padding: '0.4rem' }} />
                       </tr>
                     </thead>
                     <tbody>
@@ -366,6 +405,16 @@ export function GolfAdminPanel({ adminToken, events }: { adminToken: string; eve
                             <td style={{ padding: '0.35rem' }}><input className="input" value={g.r3} onChange={(e) => setGolferField(tierNumber, rowIdx, 'r3', e.target.value)} /></td>
                             <td style={{ padding: '0.35rem' }}><input className="input" value={g.r4} onChange={(e) => setGolferField(tierNumber, rowIdx, 'r4', e.target.value)} /></td>
                             <td style={{ textAlign: 'right', padding: '0.35rem', fontWeight: 600 }}>{overall}</td>
+                            <td style={{ textAlign: 'right', padding: '0.35rem' }}>
+                              <button
+                                type="button"
+                                className="btn btn-secondary"
+                                style={{ padding: '0.2rem 0.45rem', fontSize: '0.75rem' }}
+                                onClick={() => deleteGolfer(tierNumber, rowIdx)}
+                              >
+                                Delete
+                              </button>
+                            </td>
                           </tr>
                         );
                       })}
