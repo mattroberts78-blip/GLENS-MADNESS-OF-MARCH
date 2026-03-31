@@ -37,7 +37,7 @@ export async function Header() {
         </span>
         <span className="site-title">{brandTitle}</span>
       </Link>
-      <Countdown />
+      {session?.contest !== 'golf' && <Countdown />}
       <nav className="site-nav">
         {session?.isAdmin ? (
           <>
@@ -76,8 +76,7 @@ export async function Header() {
           </>
         ) : (
           <>
-            <Link href="/login" className="nav-link nav-link-cta">Log in</Link>
-            <Link href="/create-account" className="nav-link">Create account</Link>
+            <Link href="/" className="nav-link nav-link-cta">Log in</Link>
           </>
         )}
       </nav>

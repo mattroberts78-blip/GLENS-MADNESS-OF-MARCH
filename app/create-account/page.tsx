@@ -32,7 +32,8 @@ export default function CreateAccountPage({
       )}
       {error === 'duplicate' && (
         <p style={{ color: 'var(--error)', marginBottom: '1rem', fontSize: '0.9rem' }}>
-          An account with that email already exists. <Link href="/login">Log in</Link> instead.
+          An account with that email already exists.{' '}
+          <Link href={`/login?contest=${selectedContest}`}>Log in</Link> instead.
         </p>
       )}
 
@@ -108,7 +109,7 @@ export default function CreateAccountPage({
       </form>
 
       <p style={{ marginTop: '1rem', fontSize: '0.9rem', color: 'var(--text-muted)' }}>
-        Already have an account? <Link href="/login">Log in</Link>
+        Already have an account? <Link href={`/login?contest=${selectedContest}`}>Log in</Link>
       </p>
     </main>
   );

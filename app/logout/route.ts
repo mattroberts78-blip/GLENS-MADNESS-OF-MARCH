@@ -5,7 +5,7 @@ import { clearSessionCookie } from '@/lib/auth/session';
 // Next.js prefetching or background GET requests.
 export async function POST(request: Request) {
   const url = new URL(request.url);
-  const res = NextResponse.redirect(`${url.origin}/login`);
+  const res = NextResponse.redirect(`${url.origin}/`);
   const cookie = clearSessionCookie();
   res.cookies.set(cookie.name, cookie.value, cookie.options);
   return res;

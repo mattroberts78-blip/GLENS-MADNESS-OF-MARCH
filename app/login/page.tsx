@@ -40,9 +40,14 @@ export default function LoginPage({
           Log in
         </button>
       </form>
-      <p style={{ marginTop: '1rem', fontSize: '0.9rem', color: 'var(--text-muted)' }}>
-        <Link href="/" className="nav-link">Back to contest selection</Link>
-      </p>
+      <div style={{ marginTop: '1rem', display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+        <Link href={`/create-account?contest=${selectedContest}`} className="btn btn-secondary">
+          Create account
+        </Link>
+        <Link href="/" className="nav-link">
+          Back to contest selection
+        </Link>
+      </div>
     </main>
   );
 }

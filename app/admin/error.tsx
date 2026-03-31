@@ -21,8 +21,8 @@ export default function AdminError({
       <button className="btn btn-primary" onClick={() => reset()}>
         Try again
       </button>
-      <a href="/login" className="btn btn-secondary" style={{ marginLeft: '0.5rem' }}>
-        Back to login
+      <a href="/" className="btn btn-secondary" style={{ marginLeft: '0.5rem' }}>
+        Back to contest selection
       </a>
     </main>
   );

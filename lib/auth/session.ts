@@ -22,16 +22,27 @@ function encode(session: Session): string {
   return Buffer.from(JSON.stringify(session)).toString('base64');
 }
 
+function normalizeSession(raw: unknown): Session | null {
+  if (!raw || typeof raw !== 'object') return null;
+  const o = raw as Record<string, unknown>;
+  const credentialId = Number(o.credentialId);
+  const username = typeof o.username === 'string' ? o.username : '';
+  const isAdmin = o.isAdmin === true || o.isAdmin === 't';
+  const contest: Session['contest'] = o.contest === 'golf' ? 'golf' : 'basketball';
+  if (!Number.isFinite(credentialId) || !username) return null;
+  return { credentialId, username, isAdmin, contest };
+}
+
 function decode(value: string): Session | null {
   try {
-    return JSON.parse(Buffer.from(value, 'base64').toString('utf-8')) as Session;
+    return normalizeSession(JSON.parse(Buffer.from(value, 'base64').toString('utf-8')));
   } catch {
     // Fall back to raw JSON (old cookies before base64 migration)
     try {
-      return JSON.parse(value) as Session;
+      return normalizeSession(JSON.parse(value));
     } catch {
       try {
-        return JSON.parse(decodeURIComponent(value)) as Session;
+        return normalizeSession(JSON.parse(decodeURIComponent(value)));
       } catch {
         return null;
       }
@@ -49,7 +60,7 @@ export async function getSession(): Promise<Session | null> {
     const fromHeader = headersList.get('x-session-json');
     if (fromHeader) {
       try {
-        return JSON.parse(fromHeader) as Session;
+        return normalizeSession(JSON.parse(fromHeader));
       } catch {
         // Ignore malformed header and fall back to cookies().
       }

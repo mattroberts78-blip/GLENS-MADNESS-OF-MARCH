@@ -17,7 +17,8 @@ export default async function AdminPage({
   const hasValidToken = urlToken.length > 0 && verifyAdminToken(urlToken);
 
   if (!hasValidSession && !hasValidToken) {
-    redirect('/login?reason=session_expired');
+    const contest = session?.contest === 'golf' ? 'golf' : 'basketball';
+    redirect(session ? `/login?reason=session_expired&contest=${contest}` : '/');
   }
 
   const username = session?.username ?? 'admin';
