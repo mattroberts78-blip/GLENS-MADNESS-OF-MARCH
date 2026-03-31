@@ -5,9 +5,14 @@ import { useState } from 'react';
 export function DisplayNameForm({
   initialFirstName,
   initialLastName,
+  redirectAfterSave = '/',
+  blurb,
 }: {
   initialFirstName: string | null;
   initialLastName: string | null;
+  /** Where to go after a successful save (e.g. golf picks page). */
+  redirectAfterSave?: string;
+  blurb?: string;
 }) {
   const [firstName, setFirstName] = useState(initialFirstName ?? '');
   const [lastName, setLastName] = useState(initialLastName ?? '');
@@ -29,8 +34,8 @@ export function DisplayNameForm({
       });
       const data = (await res.json()) as { ok?: boolean };
       if (!res.ok || !data.ok) throw new Error('Save failed');
-      setMessage('Saved. This name will appear on the scoreboard.');
-      window.location.href = '/';
+      setMessage('Saved. This name will appear on the leaderboard.');
+      window.location.href = redirectAfterSave;
     } catch {
       setMessage('Failed to save. Try again.');
     } finally {
@@ -42,7 +47,8 @@ export function DisplayNameForm({
     <form onSubmit={handleSubmit} className="card" style={{ marginBottom: '1.5rem' }}>
       <h2 className="card-title">Display name for scoreboard</h2>
       <p style={{ fontSize: '0.9rem', color: 'var(--text-muted)', marginBottom: '1rem' }}>
-        Enter your first and last name. On the scoreboard you&apos;ll appear as &quot;First Last 1&quot;, &quot;First Last 2&quot;, etc. for each bracket.
+        {blurb ??
+          'Enter your first and last name. On the scoreboard you&apos;ll appear as "First Last 1", "First Last 2", etc. for each bracket.'}
       </p>
       <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', alignItems: 'flex-end' }}>
         <label style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', fontSize: '0.9rem', fontWeight: 500 }}>

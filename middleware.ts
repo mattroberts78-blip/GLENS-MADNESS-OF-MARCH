@@ -3,7 +3,16 @@ import { SESSION_COOKIE_NAME, decodeSession } from '@/lib/auth/session';
 
 export function middleware(request: NextRequest) {
   const requestHeaders = new Headers(request.headers);
-  requestHeaders.set('x-pathname', request.nextUrl.pathname);
+  const url = request.nextUrl;
+
+  requestHeaders.set('x-pathname', url.pathname);
+
+  // Surface the contest from the query string so layout/header can pick
+  // the correct branding even before a session exists (e.g. login errors).
+  const contestParam = url.searchParams.get('contest');
+  if (contestParam === 'golf' || contestParam === 'basketball') {
+    requestHeaders.set('x-contest', contestParam);
+  }
 
   // Read the raw session cookie from the incoming request.
   const raw = request.cookies.get(SESSION_COOKIE_NAME)?.value;

@@ -9,7 +9,10 @@ type Body = {
 
 export async function POST(request: NextRequest) {
   const session = getSessionFromRequest(request);
-  if (!session || session.isAdmin || session.contest !== 'basketball') {
+  if (!session || session.isAdmin) {
+    return NextResponse.json({ ok: false, error: 'unauthorized' }, { status: 401 });
+  }
+  if (session.contest !== 'basketball' && session.contest !== 'golf') {
     return NextResponse.json({ ok: false, error: 'unauthorized' }, { status: 401 });
   }
 

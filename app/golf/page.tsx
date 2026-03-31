@@ -14,14 +14,7 @@ type GolfEvent = {
 
 export default async function GolfHomePage() {
   const session = await getSession();
-  if (!session || session.isAdmin || session.contest !== 'golf') {
-    return (
-      <main className="page-container">
-        <h1 className="page-title">Golf Pick'em</h1>
-        <p className="page-subtitle">Log in with a golf account to access golf events.</p>
-      </main>
-    );
-  }
+  const golfUser = !!(session && !session.isAdmin && session.contest === 'golf');
 
   let events: GolfEvent[] = [];
   let entriesByEvent = new Map<number, number>();
@@ -35,16 +28,53 @@ export default async function GolfHomePage() {
     `;
     events = eventsResult.rows as GolfEvent[];
 
-    const entriesResult = await sql`
-      SELECT event_id, id
-      FROM golf_entries
-      WHERE credential_id = ${session.credentialId}
-    `;
-    for (const row of entriesResult.rows as { event_id: number; id: number }[]) {
-      entriesByEvent.set(row.event_id, row.id);
+    if (golfUser && session) {
+      const entriesResult = await sql`
+        SELECT event_id, id
+        FROM golf_entries
+        WHERE credential_id = ${session.credentialId}
+      `;
+      for (const row of entriesResult.rows as { event_id: number; id: number }[]) {
+        entriesByEvent.set(row.event_id, row.id);
+      }
     }
   } catch {
     events = [];
+  }
+
+  if (!golfUser) {
+    return (
+      <main className="page-container">
+        <h1 className="page-title">Golf Pick&apos;em</h1>
+        <p className="page-subtitle">
+          <Link href="/login?contest=golf" className="nav-link nav-link-cta" style={{ display: 'inline-block' }}>
+            Log in with a golf account
+          </Link>{' '}
+          to make picks. Leaderboards are public — anyone can view scores below.
+        </p>
+        {events.length === 0 ? (
+          <p style={{ color: 'var(--text-muted)' }}>No golf events yet.</p>
+        ) : (
+          <ul className="bracket-list">
+            {events.map((event) => (
+              <li key={event.id}>
+                <div className="bracket-card">
+                  <div className="bracket-card__main">
+                    <strong>{event.name}</strong>
+                    <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginTop: '0.35rem' }}>
+                      {event.starts_at ? `Starts: ${new Date(event.starts_at).toLocaleString()}` : 'Start date TBD'}
+                    </div>
+                  </div>
+                  <Link href={`/golf/events/${event.id}/leaderboard`} className="nav-link">
+                    Leaderboard
+                  </Link>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </main>
+    );
   }
 
   return (

@@ -15,8 +15,9 @@ export type GolfEntryScoreResult = {
   entryId: number;
   round1: number;
   round2: number;
-  round3: number;
-  round4: number;
+  /** Null when the entry did not qualify for weekend scoring (cut rule). */
+  round3: number | null;
+  round4: number | null;
   total: number;
   cutQualified: boolean;
   tiebreakerDelta: number | null;
@@ -72,8 +73,8 @@ export function scoreGolfEntries(
       entryId: entry.entryId,
       round1: safe(round1),
       round2: safe(round2),
-      round3: safe(round3),
-      round4: safe(round4),
+      round3: cutQualified ? safe(round3) : null,
+      round4: cutQualified ? safe(round4) : null,
       total,
       cutQualified,
       tiebreakerDelta,

@@ -1,26 +1,34 @@
 import { sql } from '@vercel/postgres';
-import { getSession } from '@/lib/auth/session';
 import { redirect } from 'next/navigation';
 import { scoreGolfEntries } from '@/lib/golf/scoring';
+import { GolfLeaderboardTable, type GolfLeaderboardRow } from '@/components/golf/GolfLeaderboardTable';
 
 export const dynamic = 'force-dynamic';
 
 export default async function GolfLeaderboardPage({ params }: { params: { eventId: string } }) {
-  const session = await getSession();
-  if (!session || session.isAdmin || session.contest !== 'golf') redirect('/login?contest=golf');
-
   const eventId = Number(params.eventId);
   if (!Number.isFinite(eventId)) redirect('/golf');
 
-  const [eventResult, picksResult, roundScoresResult] = await Promise.all([
+  const [eventResult, rowsResult, roundScoresResult] = await Promise.all([
     sql`SELECT id, name, winner_strokes FROM golf_events WHERE id = ${eventId} LIMIT 1`,
     sql`
-      SELECT e.id AS entry_id, e.tiebreaker_winner_strokes, c.username, c.first_name, c.last_name, p.golfer_id
+      SELECT
+        e.id AS entry_id,
+        e.submitted_at,
+        e.tiebreaker_winner_strokes,
+        c.username,
+        c.first_name,
+        c.last_name,
+        t.tier_number,
+        g.id AS golfer_id,
+        g.name AS golfer_name
       FROM golf_entries e
       JOIN credentials c ON c.id = e.credential_id
       LEFT JOIN golf_entry_picks p ON p.entry_id = e.id
+      LEFT JOIN golf_tiers t ON t.id = p.tier_id
+      LEFT JOIN golf_golfers g ON g.id = p.golfer_id
       WHERE e.event_id = ${eventId}
-      ORDER BY e.id ASC
+      ORDER BY e.id ASC, t.tier_number ASC NULLS LAST
     `,
     sql`
       SELECT golfer_id, round_num AS round, strokes, made_cut
@@ -32,28 +40,62 @@ export default async function GolfLeaderboardPage({ params }: { params: { eventI
   const event = eventResult.rows[0] as { id: number; name: string; winner_strokes: number | null } | undefined;
   if (!event) redirect('/golf');
 
-  const rows = picksResult.rows as {
+  const rawRows = rowsResult.rows as {
     entry_id: number;
+    submitted_at: string | null;
     tiebreaker_winner_strokes: number | null;
     username: string;
     first_name: string | null;
     last_name: string | null;
+    tier_number: number | null;
     golfer_id: number | null;
+    golfer_name: string | null;
   }[];
+
   const roundRows = roundScoresResult.rows as {
     golfer_id: number;
-    round: 1 | 2 | 3 | 4;
+    round: number;
     strokes: number | null;
     made_cut: boolean;
   }[];
 
-  const byEntry = new Map<number, { name: string; tiebreaker: number | null; picks: number[] }>();
-  for (const row of rows) {
+  const roundScoresForEngine = roundRows.map((r) => ({
+    golferId: r.golfer_id,
+    round: r.round as 1 | 2 | 3 | 4,
+    strokes: r.strokes,
+    madeCut: r.made_cut,
+  }));
+
+  type EntryAgg = {
+    name: string;
+    tiebreaker: number | null;
+    submittedAt: string | null;
+    picks: number[];
+    pickRows: { tierNumber: number; golferId: number; golferName: string }[];
+  };
+
+  const byEntry = new Map<number, EntryAgg>();
+  for (const row of rawRows) {
     if (!byEntry.has(row.entry_id)) {
-      const displayName = `${(row.first_name ?? '').trim()} ${(row.last_name ?? '').trim()}`.trim() || row.username;
-      byEntry.set(row.entry_id, { name: displayName, tiebreaker: row.tiebreaker_winner_strokes, picks: [] });
+      const displayName =
+        `${(row.first_name ?? '').trim()} ${(row.last_name ?? '').trim()}`.trim() || row.username;
+      byEntry.set(row.entry_id, {
+        name: displayName,
+        tiebreaker: row.tiebreaker_winner_strokes,
+        submittedAt: row.submitted_at,
+        picks: [],
+        pickRows: [],
+      });
     }
-    if (row.golfer_id != null) byEntry.get(row.entry_id)!.picks.push(row.golfer_id);
+    if (row.golfer_id != null && row.tier_number != null && row.golfer_name != null) {
+      const agg = byEntry.get(row.entry_id)!;
+      agg.picks.push(row.golfer_id);
+      agg.pickRows.push({
+        tierNumber: row.tier_number,
+        golferId: row.golfer_id,
+        golferName: row.golfer_name,
+      });
+    }
   }
 
   const scored = scoreGolfEntries(
@@ -62,12 +104,7 @@ export default async function GolfLeaderboardPage({ params }: { params: { eventI
       tiebreakerWinnerStrokes: data.tiebreaker,
       picks: data.picks,
     })),
-    roundRows.map((r) => ({
-      golferId: r.golfer_id,
-      round: r.round,
-      strokes: r.strokes,
-      madeCut: r.made_cut,
-    })),
+    roundScoresForEngine,
     event.winner_strokes
   ).map((score) => ({ ...score, name: byEntry.get(score.entryId)?.name ?? `Entry ${score.entryId}` }));
 
@@ -78,38 +115,52 @@ export default async function GolfLeaderboardPage({ params }: { params: { eventI
     return ad - bd;
   });
 
+  const strokeMap = new Map<number, { r1: number | null; r2: number | null; r3: number | null; r4: number | null }>();
+  for (const r of roundRows) {
+    if (!strokeMap.has(r.golfer_id)) {
+      strokeMap.set(r.golfer_id, { r1: null, r2: null, r3: null, r4: null });
+    }
+    const row = strokeMap.get(r.golfer_id)!;
+    const s = r.strokes;
+    if (r.round === 1) row.r1 = s;
+    if (r.round === 2) row.r2 = s;
+    if (r.round === 3) row.r3 = s;
+    if (r.round === 4) row.r4 = s;
+  }
+
+  const leaderboardRows: GolfLeaderboardRow[] = scored.map((s, idx) => {
+    const agg = byEntry.get(s.entryId)!;
+    const pickRows = [...agg.pickRows].sort((a, b) => a.tierNumber - b.tierNumber);
+    const picks = pickRows.map((p) => {
+      const st = strokeMap.get(p.golferId);
+      return {
+        tierNumber: p.tierNumber,
+        golferName: p.golferName,
+        r1: st?.r1 ?? null,
+        r2: st?.r2 ?? null,
+        r3: st?.r3 ?? null,
+        r4: st?.r4 ?? null,
+      };
+    });
+    return {
+      entryId: s.entryId,
+      rank: idx + 1,
+      name: s.name,
+      round1: s.round1,
+      round2: s.round2,
+      round3: s.round3,
+      round4: s.round4,
+      total: Number.isFinite(s.total) ? s.total : null,
+      submittedAt: agg.submittedAt,
+      picks,
+    };
+  });
+
   return (
     <main className="page-container">
       <h1 className="page-title">{event.name} - Leaderboard</h1>
       <p className="page-subtitle">Rounds score as best 6/5/4/4 picks, with cut rule for rounds 3 and 4.</p>
-      <section className="card">
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-          <thead>
-            <tr>
-              <th style={{ textAlign: 'left', padding: '0.5rem' }}>Rank</th>
-              <th style={{ textAlign: 'left', padding: '0.5rem' }}>Entrant</th>
-              <th style={{ textAlign: 'right', padding: '0.5rem' }}>R1</th>
-              <th style={{ textAlign: 'right', padding: '0.5rem' }}>R2</th>
-              <th style={{ textAlign: 'right', padding: '0.5rem' }}>R3</th>
-              <th style={{ textAlign: 'right', padding: '0.5rem' }}>R4</th>
-              <th style={{ textAlign: 'right', padding: '0.5rem' }}>Total</th>
-            </tr>
-          </thead>
-          <tbody>
-            {scored.map((row, idx) => (
-              <tr key={row.entryId} style={{ borderTop: '1px solid var(--border)' }}>
-                <td style={{ padding: '0.5rem' }}>{idx + 1}</td>
-                <td style={{ padding: '0.5rem' }}>{row.name}</td>
-                <td style={{ textAlign: 'right', padding: '0.5rem' }}>{row.round1}</td>
-                <td style={{ textAlign: 'right', padding: '0.5rem' }}>{row.round2}</td>
-                <td style={{ textAlign: 'right', padding: '0.5rem' }}>{row.round3}</td>
-                <td style={{ textAlign: 'right', padding: '0.5rem' }}>{row.round4}</td>
-                <td style={{ textAlign: 'right', padding: '0.5rem', fontWeight: 700 }}>{row.total}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </section>
+      <GolfLeaderboardTable rows={leaderboardRows} />
     </main>
   );
 }

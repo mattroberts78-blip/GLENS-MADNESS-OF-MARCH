@@ -14,10 +14,18 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const pathname = headers().get('x-pathname') ?? '';
+  const hdrs = headers();
+  const pathname = hdrs.get('x-pathname') ?? '';
+  const headerContest = hdrs.get('x-contest');
   const session = await getSession();
+
   const isContestSelectionScreen = pathname === '/' && !session;
-  const backgroundLogoSrc = session?.contest === 'golf' ? '/Dans_Logo.png' : '/glensmadness.png';
+  const isLoginScreen = pathname === '/login';
+
+  const activeContest: 'basketball' | 'golf' =
+    session?.contest === 'golf' || headerContest === 'golf' ? 'golf' : 'basketball';
+
+  const backgroundLogoSrc = activeContest === 'golf' ? '/Dans_Logo.png' : '/glensmadness.png';
 
   return (
     <html lang="en">
@@ -28,7 +36,7 @@ export default async function RootLayout({
           </div>
         )}
         <div className="page-wrap">
-          {!isContestSelectionScreen && <Header />}
+          {!isContestSelectionScreen && !isLoginScreen && <Header />}
           {children}
         </div>
       </body>

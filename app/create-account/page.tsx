@@ -12,7 +12,9 @@ export default function CreateAccountPage({
     <main className="page-container" style={{ maxWidth: 420 }}>
       <h1 className="page-title">Create account</h1>
       <p className="page-subtitle">
-        Choose contest, then create your login with email and 4-digit PIN.
+        {selectedContest === 'golf'
+          ? "Create your Dan's Master's Pick'em login with email and 4-digit PIN."
+          : "Create your Glen's Madness of March login with email and 4-digit PIN."}
       </p>
 
       {error === 'email' && (
@@ -37,20 +39,17 @@ export default function CreateAccountPage({
         </p>
       )}
 
-      <form action="/api/auth/create-account" method="POST" className="card" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-        <label style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', fontSize: '0.9rem', fontWeight: 500 }}>
-          Contest
-          <div style={{ display: 'flex', gap: '1rem' }}>
-            <label style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
-              <input type="radio" name="contest" value="basketball" defaultChecked={selectedContest === 'basketball'} />
-              Basketball
-            </label>
-            <label style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}>
-              <input type="radio" name="contest" value="golf" defaultChecked={selectedContest === 'golf'} />
-              Golf
-            </label>
-          </div>
-        </label>
+      <form
+        action="/api/auth/create-account"
+        method="POST"
+        className="card"
+        style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}
+      >
+        <input type="hidden" name="contest" value={selectedContest} />
+        <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text-muted)' }}>
+          Contest:{' '}
+          <strong>{selectedContest === 'golf' ? "Dan's Master's Pick'em (golf)" : "Glen's Madness of March (basketball)"}</strong>
+        </p>
         <label style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', fontSize: '0.9rem', fontWeight: 500 }}>
           Email
           <input
